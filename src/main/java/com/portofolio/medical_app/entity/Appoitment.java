@@ -19,17 +19,17 @@ public class Appoitment {
     private Long id;
 
     @Column(nullable = false)
-    private LocalDateTime appoitmentDate; //Datum und Uhrzeit des Termins
+    private LocalDateTime appointmentDate; //Datum und Uhrzeit des Termins
 
     @Column(nullable = false)
-    private String status; //z.B. "PENDING" (Ausstehend"), "CONFIRMED",(Bestädigt), "CANCELLED"(Storniert)
+    private String status; //z.B. "PENDING" (Ausstehend"), "CONFIRMED",(Bestätigt), "CANCELLED"(Storniert)
 
     // ===================================
-    // BEZIUNGEN ZU ANDEREN TABELLEB (Foreign Keys)
+    // BEZIEUNGEN ZU ANDEREN TABELLEN (Foreign Keys)
     // ===================================
 
     //
-    @ManyToOne //Viele Termine können zu Einem Patienten ghören
+    @ManyToOne //Viele Termine können zu Einem Patienten gehören
     @JoinColumn(name = "patient_id", nullable = false) //Das erstellt die Spalte "patient_id" in der Datenbank
     private AppUser patient;
 
