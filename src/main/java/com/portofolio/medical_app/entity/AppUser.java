@@ -28,4 +28,7 @@ public class AppUser {
     @Column(nullable = false)
     private String role;
 
+    @Column(nullable = false)
+    private boolean enabled=false;
+
 }
