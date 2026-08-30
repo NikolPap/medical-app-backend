@@ -2,6 +2,7 @@ package com.portofolio.medical_app.controller;
 
 import com.portofolio.medical_app.dto.RegisterRequestDto;
 import com.portofolio.medical_app.dto.RegisterResponseDto;
+import com.portofolio.medical_app.dto.VerificationRequstDto;
 import com.portofolio.medical_app.exception.UserAlreadyExistsException;
 import com.portofolio.medical_app.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,20 @@ public class AuthController {
 
         }   catch (UserAlreadyExistsException e) {
             //Wenn die E-mail schon existiert, senden wir ein HTTP 400(Bad  Request)
+            RegisterResponseDto errorResponse = new RegisterResponseDto(e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    //Post-Requst zum Verifizieren(URL: http://localhost:8080/api/auth/verify)
+    @PostMapping("/verify")
+    public ResponseEntity<RegisterResponseDto> verify(@RequestBody VerificationRequstDto request) {
+        try {
+            authService.verifyAccount(request);
+
+            RegisterResponseDto responseDto = new RegisterResponseDto("Konto wurde erfolgreich veifiziert und entsperrt!");
+            return ResponseEntity.ok(responseDto);
+        }catch (RuntimeException e) {
             RegisterResponseDto errorResponse = new RegisterResponseDto(e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
