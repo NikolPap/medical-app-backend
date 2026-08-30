@@ -1,4 +1,8 @@
 package com.portofolio.medical_app.dto;
 
-public record VerificationRequstDto() {
+public record VerificationRequstDto(
+        String email,
+        String code
+
+) {
 }
