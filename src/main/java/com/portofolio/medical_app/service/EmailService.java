@@ -24,7 +24,7 @@ public class EmailService {
 
             log.info("📧 E-Mail erfolgreich gesendet an: {}", toEmail);
             log.info("🔐 Der Code lautet: {}", token);
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.error("Fehler beim Senden der E-Mail", e);
             log.warn("⚠️ FALLBACK: Der Code für {} ist: {}", toEmail, token);
         }
