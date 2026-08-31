@@ -2,7 +2,7 @@ package com.portofolio.medical_app.controller;
 
 import com.portofolio.medical_app.dto.RegisterRequestDto;
 import com.portofolio.medical_app.dto.RegisterResponseDto;
-import com.portofolio.medical_app.dto.VerificationRequstDto;
+import com.portofolio.medical_app.dto.VerificationRequestDto;
 import com.portofolio.medical_app.exception.UserAlreadyExistsException;
 import com.portofolio.medical_app.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ public class AuthController {
 
     //Post-Requst zum Verifizieren(URL: http://localhost:8080/api/auth/verify)
     @PostMapping("/verify")
-    public ResponseEntity<RegisterResponseDto> verify(@RequestBody VerificationRequstDto request) {
+    public ResponseEntity<RegisterResponseDto> verify(@RequestBody VerificationRequestDto request) {
         try {
             authService.verifyAccount(request);
 
