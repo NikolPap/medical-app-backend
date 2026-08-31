@@ -12,11 +12,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class VerificationToken {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+public class VerificationToken extends BaseEntity{
     @Column(nullable = false, unique = true)
     private String token;
 
