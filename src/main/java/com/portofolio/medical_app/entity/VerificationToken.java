@@ -23,4 +23,7 @@ public class VerificationToken extends BaseEntity{
     @JoinColumn(name= "user_id", nullable = false)
     private AppUser user;
 
+    @Column(nullable = false)
+    private boolean used = false;
+
 }
