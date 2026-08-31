@@ -1,7 +1,7 @@
 package com.portofolio.medical_app.service;
 
 import com.portofolio.medical_app.dto.RegisterRequestDto;
-import com.portofolio.medical_app.dto.VerificationRequstDto;
+import com.portofolio.medical_app.dto.VerificationRequestDto;
 import com.portofolio.medical_app.entity.AppUser;
 import com.portofolio.medical_app.entity.VerificationToken;
 import com.portofolio.medical_app.exception.UserAlreadyExistsException;
@@ -53,7 +53,7 @@ public class AuthService {
 
     //----Methode zur Verifizierung------
     @Transactional
-    public void verifyAccount(VerificationRequstDto request) {
+    public void verifyAccount(VerificationRequestDto request) {
         AppUser user = appUserRepository.findByEmail(request.email()).
                 orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden."));
 
