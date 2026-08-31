@@ -61,7 +61,7 @@ public class AuthService {
             throw new RuntimeException("Konto ist bereits verifiziert.");
         }
 
-        VerificationToken verificationToken = verificationTokenRepository.findByUser_Email(user.getEmail())
+        VerificationToken verificationToken = verificationTokenRepository.findByUser_EmailAndUsedFalse(user.getEmail())
                 .orElseThrow(() -> new RuntimeException("Kein Bestätigungscode gefunden."));
 
 
@@ -75,7 +75,8 @@ public class AuthService {
 
         user.setEnabled(true);
         appUserRepository.save(user);
-        verificationTokenRepository.delete(verificationToken);
 
+        verificationToken.setUsed(true);
+        verificationTokenRepository.save(verificationToken);
     }
 }
