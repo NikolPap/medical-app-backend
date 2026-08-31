@@ -50,33 +50,4 @@ public class AuthService {
         //Den UNVERSCHLÜSSELTEN Code an den User schicken
         emailService.sendVerificationEmail(savedUser.getEmail(), randomCode);
     }
-
-    //----Methode zur Verifizierung------
-    @Transactional
-    public void verifyAccount(VerificationRequestDto request) {
-        AppUser user = appUserRepository.findByEmail(request.email()).
-                orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden."));
-
-        if (user.isEnabled()) {
-            throw new RuntimeException("Konto ist bereits verifiziert.");
-        }
-
-        VerificationToken verificationToken = verificationTokenRepository.findByUser_EmailAndUsedFalse(user.getEmail())
-                .orElseThrow(() -> new RuntimeException("Kein Bestätigungscode gefunden."));
-
-
-        if (verificationToken.getExpiresAt().isBefore(java.time.LocalDateTime.now())) {
-            throw new UserAlreadyExistsException("Der Bestätigungscode ist abgelaufen. Bitte registriere dich neu.");
-        }
-
-        if(!passwordEncoder.matches(request.code(), verificationToken.getToken())) {
-            throw new RuntimeException("Falscher Bestätigung!");
-        }
-
-        user.setEnabled(true);
-        appUserRepository.save(user);
-
-        verificationToken.setUsed(true);
-        verificationTokenRepository.save(verificationToken);
-    }
 }
