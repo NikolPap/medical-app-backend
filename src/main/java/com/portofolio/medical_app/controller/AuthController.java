@@ -5,6 +5,7 @@ import com.portofolio.medical_app.dto.RegisterResponseDto;
 import com.portofolio.medical_app.dto.VerificationRequestDto;
 import com.portofolio.medical_app.exception.UserAlreadyExistsException;
 import com.portofolio.medical_app.service.AuthService;
+import com.portofolio.medical_app.service.VerificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final VerificationService verificationService;
 
     //POST-Request zum Registrieren (URL: http://localhost:8080/api/auth/register)
     @PostMapping("/register")
@@ -41,10 +43,10 @@ public class AuthController {
     @PostMapping("/verify")
     public ResponseEntity<RegisterResponseDto> verify(@RequestBody VerificationRequestDto request) {
         try {
-            authService.verifyAccount(request);
+           verificationService.verifyAccount(request);
 
-            RegisterResponseDto responseDto = new RegisterResponseDto("Konto wurde erfolgreich veifiziert und entsperrt!");
-            return ResponseEntity.ok(responseDto);
+           return ResponseEntity.ok(new RegisterResponseDto("Konto wurde erfolgreich veifiziert und entsperrt!"));
+
         }catch (RuntimeException e) {
             RegisterResponseDto errorResponse = new RegisterResponseDto(e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
