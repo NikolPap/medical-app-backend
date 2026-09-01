@@ -29,4 +29,20 @@ public class EmailService {
             log.warn("⚠️ FALLBACK: Der Code für {} ist: {}", toEmail, token);
         }
     }
+
+    public void sendPasswordResetEmail(String toEmail, String token) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("noreply@medical-app.com");
+            message.setTo(toEmail);
+            message.setSubject("Reset Password");
+            message.setText("Du hast eine Anfrage zum Zurücksetzen deines Passworts gestellt.\n" +
+                    "Dein Code lautet: " + token + "\n" +
+                    "Dieser Code ist 15 Minuten gültig.");
+            mailSender.send(message);
+            log.info("📧 Passwort-Reset-E-Mail erfolgreich gesendet an: {}", toEmail);
+        } catch (Exception e) {
+            log.warn("⚠️ FALLBACK: Der Passwort-Reset-Code für {} ist: {}", toEmail, token);
+        }
+    }
 }
