@@ -8,14 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-
 @Service
 @RequiredArgsConstructor
 public class LoginService {
 
-    private static final int MAX_FAILED_ATTEMPTS = 3;
-    private static final int LOCK_TIME_DURATION_MINUTES = 15;
+    private static final int MAX_FAILED_ATTEMPTS = 5;
 
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
@@ -33,18 +30,17 @@ public class LoginService {
 
         // 2. Ist der Account gesperrt (weil er 3x falsch lag)?
         if (!user.isAccountNonLocked()) {
-            if (unlockWhenTimeExpired(user)) {
-                // Die 15 Minuten sind vorbei! Konto wurde gerade wieder entsperrt.
-            } else {
-                throw new RuntimeException("Konto ist vorübergehend gesperrt. Bitte warte 15 Minuten.");
+            throw new RuntimeException("Konto wurde aus Sicherheitsgründen gesperrt. Bitte nutze die 'Passwort vergessen'-Funktion.");
             }
-        }
 
         // 3. STIMMT DAS PASSWORT?
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
 
             // PASSWORT FALSCH -> Fehlversuche erhöhen!
             registerFailedLogin(user);
+           if(!user.isAccountNonLocked()) {
+               throw new RuntimeException("Zu viele Fehlversuche! Das Konto wurde aus Sicherheitsgründen gesperrt.");
+           }
             throw new RuntimeException("Falsche E-Mail oder Passwort.");
         }
 
@@ -65,27 +61,13 @@ public class LoginService {
         if (newAttempts >= MAX_FAILED_ATTEMPTS) {
             // Konto sperren!
             user.setAccountNonLocked(false);
-            user.setLockTime(LocalDateTime.now());
+            user.setAccountNonLocked(false);
         }
         appUserRepository.save(user); // Änderungen in der DB speichern
     }
 
     private void resetFailedAttempts(AppUser user) {
         user.setFailedLoginAttempts(0);
-        user.setAccountNonLocked(true);
-        user.setLockTime(null);
         appUserRepository.save(user);
-    }
-
-    private boolean unlockWhenTimeExpired(AppUser user) {
-        LocalDateTime lockTime = user.getLockTime();
-        if (lockTime != null && lockTime.plusMinutes(LOCK_TIME_DURATION_MINUTES).isBefore(LocalDateTime.now())) {
-            user.setAccountNonLocked(true);
-            user.setLockTime(null);
-            user.setFailedLoginAttempts(0);
-            appUserRepository.save(user);
-            return true;
-        }
-        return false;
     }
 }
