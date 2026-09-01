@@ -11,6 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -34,6 +35,15 @@ public class AppUser extends BaseEntity implements UserDetails{
     @Column(nullable = false)
     private boolean enabled=false;
 
+    @Column(nullable = false)
+    private int failedLoginAttempts = 0;
+
+    @Column(nullable = false)
+    private boolean accountNonLocked = true;
+
+    @Column
+    private LocalDateTime lockTime;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role));
@@ -51,7 +61,7 @@ public class AppUser extends BaseEntity implements UserDetails{
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return accountNonLocked;
     }
     @Override
     public boolean isCredentialsNonExpired() {
