@@ -41,8 +41,6 @@ public class AppUser extends BaseEntity implements UserDetails{
     @Column(nullable = false)
     private boolean accountNonLocked = true;
 
-    @Column
-    private LocalDateTime lockTime;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
