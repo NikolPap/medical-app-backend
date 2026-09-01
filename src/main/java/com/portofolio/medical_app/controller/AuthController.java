@@ -1,10 +1,9 @@
 package com.portofolio.medical_app.controller;
 
-import com.portofolio.medical_app.dto.RegisterRequestDto;
-import com.portofolio.medical_app.dto.RegisterResponseDto;
-import com.portofolio.medical_app.dto.VerificationRequestDto;
+import com.portofolio.medical_app.dto.*;
 import com.portofolio.medical_app.exception.UserAlreadyExistsException;
 import com.portofolio.medical_app.service.AuthService;
+import com.portofolio.medical_app.service.LoginService;
 import com.portofolio.medical_app.service.VerificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final AuthService authService;
     private final VerificationService verificationService;
+    private final LoginService loginService;
 
     //POST-Request zum Registrieren (URL: http://localhost:8080/api/auth/register)
     @PostMapping("/register")
@@ -33,7 +33,7 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         }   catch (UserAlreadyExistsException e) {
-            //Wenn die E-mail schon existiert, senden wir ein HTTP 400(Bad  Request)
+            //Wenn die E-Mail schon existiert, senden wir ein HTTP 400(Bad  Request)
             RegisterResponseDto errorResponse = new RegisterResponseDto(e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
@@ -52,4 +52,18 @@ public class AuthController {
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
+
+    //POST-Request zum Einloggen (URL: http://localhost:8080/api/auth/lögin)
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequestDto request) {
+        try {
+            AuthResponseDto responseDto = loginService.login(request);
+
+            return ResponseEntity.ok(responseDto);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).body(new RegisterResponseDto(e.getMessage()));
+        }
+    }
+
+
 }
