@@ -28,7 +28,7 @@ public class AuthService {
     //Die Methode zur Registrierung
     public void register(RegisterRequestDto request) {
 
-        //1. Prüfen: Gibt es diese E-mail schon in der Datenbank?
+        //1. Prüfen: Gibt es diese E-Mail schon in der Datenbank?
         if (appUserRepository.findByEmail(request.email()).isPresent()) {
             throw new AppException("Diese Email existiert bereits!"); //Bricht den Vorgang mit Fehler ab
         }
