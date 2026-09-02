@@ -1,7 +1,7 @@
 package com.portofolio.medical_app.controller;
 
 import com.portofolio.medical_app.dto.*;
-import com.portofolio.medical_app.exception.UserAlreadyExistsException;
+import com.portofolio.medical_app.exception.AppException;
 import com.portofolio.medical_app.service.AuthService;
 import com.portofolio.medical_app.service.LoginService;
 import com.portofolio.medical_app.service.PasswordResetService;
@@ -34,7 +34,7 @@ public class AuthController {
             //Wenn alles klappt, senden wir ein HTTP 200(OK) an das Frontend
             return ResponseEntity.ok(response);
 
-        }   catch (UserAlreadyExistsException e) {
+        }   catch (AppException e) {
             //Wenn die E-Mail schon existiert, senden wir ein HTTP 400(Bad  Request)
             RegisterResponseDto errorResponse = new RegisterResponseDto(e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
