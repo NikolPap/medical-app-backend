@@ -13,6 +13,7 @@ import java.util.Optional;
 
 @Repository
 public interface VerificationTokenRepository extends JpaRepository<VerificationToken, Long> {
+
     Optional<VerificationToken> findByUser_EmailAndUsedFalse(String email);
 
     @Modifying
