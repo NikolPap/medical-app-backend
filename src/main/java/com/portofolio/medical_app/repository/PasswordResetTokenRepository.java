@@ -11,4 +11,5 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
 
     @Query("SELECT p FROM PasswordResetToken p JOIN p.user u WHERE u.email = :email AND p.used = false")
     Optional<PasswordResetToken> findValidTokenByEmail(@Param("email") String email);
+
 }
