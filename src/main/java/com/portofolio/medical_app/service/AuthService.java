@@ -1,15 +1,13 @@
 package com.portofolio.medical_app.service;
 
 import com.portofolio.medical_app.dto.RegisterRequestDto;
-import com.portofolio.medical_app.dto.VerificationRequestDto;
 import com.portofolio.medical_app.entity.AppUser;
 import com.portofolio.medical_app.entity.VerificationToken;
-import com.portofolio.medical_app.exception.UserAlreadyExistsException;
+import com.portofolio.medical_app.exception.AppException;
 import com.portofolio.medical_app.mapper.AppUserMapper;
 import com.portofolio.medical_app.mapper.VerificationTokenMapper;
 import com.portofolio.medical_app.repository.AppUserRepository;
 import com.portofolio.medical_app.repository.VerificationTokenRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,9 +27,10 @@ public class AuthService {
 
     //Die Methode zur Registrierung
     public void register(RegisterRequestDto request) {
+
         //1. Prüfen: Gibt es diese E-mail schon in der Datenbank?
         if (appUserRepository.findByEmail(request.email()).isPresent()) {
-            throw new UserAlreadyExistsException("Diese Email existiert bereits!"); //Bricht den Vorgang mit Fehler ab
+            throw new AppException("Diese Email existiert bereits!"); //Bricht den Vorgang mit Fehler ab
         }
 
         //2. Das Passwort verschlüsseln
@@ -50,4 +49,5 @@ public class AuthService {
         //Den UNVERSCHLÜSSELTEN Code an den User schicken
         emailService.sendVerificationEmail(savedUser.getEmail(), randomCode);
     }
+
 }
