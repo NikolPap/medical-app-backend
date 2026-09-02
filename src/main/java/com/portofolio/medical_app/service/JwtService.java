@@ -17,7 +17,7 @@ public class JwtService {
     // Das ist unser geheimer Schlüssel! Wenn ein Hacker den nicht kennt,
     // kann er keine falschen Tokens herstellen.
     // WICHTIG: Muss mindestens 256-bit (32 Zeichen) lang sein!
-    private static final String SECRET_KEY = "PortfolioMedicalAppSuperSecretKeyForJwtGeneration";
+    private static final String SECRET_KEY = "PortfolioMedicalAppSuperSecretKeyForJwtGenerationSpringSecurityVerificationToken";
 
     // Diese Methode generiert den eigentlichen Token
     public String generateToken(AppUser user) {
@@ -62,7 +62,7 @@ public class JwtService {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
-                .parseClaimsJwt(token)
+                .parseClaimsJws(token)
                 .getBody();
     }
 
