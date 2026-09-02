@@ -31,7 +31,7 @@ public class JwtService {
                 .setSubject(user.getEmail()) // Wer ist der Besitzer? (E-Mail)
                 .setIssuedAt(new Date(System.currentTimeMillis())) // Wann wurde der Token erstellt?
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // Läuft ab in 24 Stunden
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256) // Mit unserem Geheimnis unterschreiben
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512) // Mit unserem Geheimnis unterschreiben
                 .compact(); // Alles zu einem langen String (Token) zusammenpressen
     }
 
@@ -40,4 +40,30 @@ public class JwtService {
         byte[] keyBytes = SECRET_KEY.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+    //Extrahiert den Benutzernamen (E-Mail) aus dem Token
+    public  String extractUsername(String token) {
+        return extractAllClaims(token).getSubject();
+    }
+
+    //Prüft, ob das Token für diesen speziellen Benutzer gültig ist und nicht abgelaufen ist
+    public boolean isTokenValid(String token, AppUser user) {
+        final String username = extractUsername(token);
+        return (username.equals(user.getEmail())) && !isTokenExpired(token);
+    }
+
+    //(Hilfsmethode) Entschlüsselt das Token mit unserem geheimen Schlüssel
+    private boolean isTokenExpired(String token) {
+        return extractAllClaims(token).getExpiration().before(new Date());
+    }
+
+    //Entschlüsselt das Token mit unserem geheimen Schlüssel
+    private io.jsonwebtoken.Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJwt(token)
+                .getBody();
+    }
+
 }
