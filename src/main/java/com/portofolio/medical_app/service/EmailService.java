@@ -1,7 +1,10 @@
 package com.portofolio.medical_app.service;
 
+import com.portofolio.medical_app.exception.AppException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -10,6 +13,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class EmailService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
+
     private final JavaMailSender mailSender;
 
     public void sendVerificationEmail(String toEmail, String token) {
@@ -22,11 +28,13 @@ public class EmailService {
 
             mailSender.send(message);
 
-            log.info("📧 E-Mail erfolgreich gesendet an: {}", toEmail);
-            log.info("🔐 Der Code lautet: {}", token);
+            LOGGER.info("E-Mail adresse: {}", toEmail);
+
+            System.out.println("🔐 Der Code lautet: {}" + token);
+
         } catch (Exception e) {
-            log.error("Fehler beim Senden der E-Mail", e);
-            log.warn("⚠️ FALLBACK: Der Code für {} ist: {}", toEmail, token);
+            LOGGER.info("Fehler beim Senden der E-Mail {}", e);
+            throw new AppException("Fehler beim Senden der E-Mail", e);
         }
     }
 
@@ -40,9 +48,10 @@ public class EmailService {
                     "Dein Code lautet: " + token + "\n" +
                     "Dieser Code ist 15 Minuten gültig.");
             mailSender.send(message);
-            log.info("📧 Passwort-Reset-E-Mail erfolgreich gesendet an: {}", toEmail);
+            LOGGER.info("📧 Passwort-Reset-E-Mail erfolgreich gesendet an: {}", toEmail);
         } catch (Exception e) {
-            log.warn("⚠️ FALLBACK: Der Passwort-Reset-Code für {} ist: {}", toEmail, token);
+            LOGGER.warn("⚠️ FALLBACK: Der Passwort-Reset-Code für {} ist: {}", toEmail, token);
         }
     }
+
 }
