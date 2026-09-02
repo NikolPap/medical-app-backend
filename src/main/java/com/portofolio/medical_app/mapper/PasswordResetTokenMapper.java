@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 
 @Component
 public class PasswordResetTokenMapper {
+
     public PasswordResetToken toEntity(String hashedToken, AppUser user) {
         PasswordResetToken resetToken = new PasswordResetToken();
         resetToken.setToken(hashedToken);
@@ -16,4 +17,5 @@ public class PasswordResetTokenMapper {
 
         return resetToken;
     }
+
 }
