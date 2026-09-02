@@ -4,6 +4,7 @@ import com.portofolio.medical_app.dto.ForgotPasswordRequestDto;
 import com.portofolio.medical_app.dto.ResetPasswordRequestDto;
 import com.portofolio.medical_app.entity.AppUser;
 import com.portofolio.medical_app.entity.PasswordResetToken;
+import com.portofolio.medical_app.exception.AppException;
 import com.portofolio.medical_app.mapper.PasswordResetTokenMapper; // 1. IMPORT
 import com.portofolio.medical_app.repository.AppUserRepository;
 import com.portofolio.medical_app.repository.PasswordResetTokenRepository;
@@ -31,10 +32,10 @@ public class PasswordResetService {
     public void requestPasswordReset(ForgotPasswordRequestDto request) {
 
         AppUser user = appUserRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden."));
+                .orElseThrow(() -> new AppException("Benutzer nicht gefunden."));
 
         if(!user.isEnabled()) {
-            throw new RuntimeException("Bitte bestätige zuerst deine E-Mail-Adresse!");
+            throw new AppException("Bitte bestätige zuerst deine E-Mail-Adresse!");
         }
 
         // 3. ΣΗΜΕΙΩΣΗ: Αφαίρεσα το `new SecureRandom()` που είχες εδώ,
@@ -53,17 +54,17 @@ public class PasswordResetService {
     public void resetPassword(ResetPasswordRequestDto request) {
 
         AppUser user = appUserRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden."));
+                .orElseThrow(() -> new AppException("Benutzer nicht gefunden."));
 
         PasswordResetToken resetToken = passwordResetTokenRepository.findValidTokenByEmail(user.getEmail())
-                .orElseThrow(() -> new RuntimeException("Kein gültiger Reset-Code gefunden."));
+                .orElseThrow(() -> new AppException("Kein gültiger Reset-Code gefunden."));
 
         if (resetToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Der Code ist abgelaufen. Bitte fordere einen neuen an.");
+            throw new AppException("Der Code ist abgelaufen. Bitte fordere einen neuen an.");
         }
 
         if (!passwordEncoder.matches(request.code(), resetToken.getToken())) {
-            throw new RuntimeException("Falscher Bestätigungscode!");
+            throw new AppException("Falscher Bestätigungscode!");
         }
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
@@ -74,4 +75,5 @@ public class PasswordResetService {
         resetToken.setUsed(true);
         passwordResetTokenRepository.save(resetToken);
     }
+
 }
