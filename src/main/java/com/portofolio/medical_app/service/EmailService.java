@@ -33,8 +33,8 @@ public class EmailService {
             System.out.println("🔐 Der Code lautet: {}" + token);
 
         } catch (Exception e) {
-            LOGGER.info("Fehler beim Senden der E-Mail {}", e);
-            throw new AppException("Fehler beim Senden der E-Mail", e);
+            LOGGER.error("Fehler beim Senden der E-Mail: {}", e.getMessage());
+            LOGGER.warn("⚠️ FALLBACK: Der Code für {} ist: {}", toEmail, token);
         }
     }
 
