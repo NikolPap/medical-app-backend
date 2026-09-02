@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Component
 public class PasswordResetTokenMapper {
 
-    public PasswordResetToken toEntity(String hashedToken, AppUser user) {
+    public PasswordResetToken toEntity(final String hashedToken, final AppUser user) {
         PasswordResetToken resetToken = new PasswordResetToken();
         resetToken.setToken(hashedToken);
         resetToken.setUser(user);
