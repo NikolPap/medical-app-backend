@@ -34,7 +34,7 @@ public class Appointment {
     private AppUser patient;
 
     //Welcher Arzt ist züstandig?
-    @ManyToOne // Viele Termine könnem zu Einem Arzt gehören
+    @ManyToOne // Viele Termine könnem zu einem Arzt gehören
     @JoinColumn(name = "doctor_id", nullable = false) // Das erstellt die Spalte "doctor_id" in der DAtenbank
     private AppUser doctor;
 }
