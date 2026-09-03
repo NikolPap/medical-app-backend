@@ -8,10 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/appointments")
@@ -43,5 +42,15 @@ public class AppointmentController {
             //senden wir die Fehlermeldung als Bad Requst (HTTP 400) an das Frontend
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    //Get-Request: Zeigt alle "besetzten" Uhrzeiten eines Arztes an einem bestimmten Tag
+    @GetMapping("/booked-slots")
+    public ResponseEntity<java.util.List<java.time.LocalDateTime>> getBookedSlots(
+            @RequestParam Long doctorId,
+            @RequestParam java.time.LocalDate date) {
+
+        java.util.List<java.time.LocalDateTime> bookedSlots = appointmentService.getBookedTimeSlots(doctorId, date);
+        return ResponseEntity.ok(bookedSlots);
     }
 }
