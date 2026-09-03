@@ -69,4 +69,26 @@ public class AppointmentService {
                 .toList();
     }
 
+    //Hole alle Termine für den eingeloggten Patienten
+    public java.util.List<AppointmentResponseDto> getAppointmentsForPatient(String patientEmail) {
+
+        java.util.List<Appointment> appointments =
+       appointmentRepository.findByPatient_EmailOrderByAppointmentDateDesc(patientEmail);
+
+        return appointments.stream()
+                .map(appointmentMapper::toResponseDto)
+                .toList();
+    }
+
+    //Hole alle Termine für den eingeloggten Arzt
+    public java.util.List<AppointmentResponseDto> getAppointmentsForDoctor(String doctorEmail) {
+
+        java.util.List<Appointment> appointments =
+                appointmentRepository.findByDoctor_EmailOrderByAppointmentDateDesc(doctorEmail);
+
+        return appointments.stream()
+                .map(appointmentMapper::toResponseDto)
+                .toList();
+    }
+
 }
