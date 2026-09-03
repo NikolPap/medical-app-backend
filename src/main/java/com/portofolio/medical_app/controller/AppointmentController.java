@@ -10,7 +10,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/appointments")
@@ -52,5 +51,42 @@ public class AppointmentController {
 
         java.util.List<java.time.LocalDateTime> bookedSlots = appointmentService.getBookedTimeSlots(doctorId, date);
         return ResponseEntity.ok(bookedSlots);
+    }
+
+    //Get_request: Mein Dashboard (Zeigt meine Termine, egal ob Arzt oder Patient)
+    @GetMapping("/me")
+    public ResponseEntity<java.util.List<AppointmentResponseDto>> getMyAppointments() {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getName() == null) {
+            throw new AppException("Authentifizierungsdaten fehlen.");
+        }
+
+        String userEmail = authentication.getName();
+
+        // Wir prüfen also nur, ob die Liste LEER ist!
+        if (authentication.getAuthorities().isEmpty()) {
+            throw new AppException("Dem Benutzer ist keine Rolle zugewiesen.");
+        }
+
+        // Wir holen die Rolle und stellen sicher, dass sie nicht null ist!
+        String role = authentication.getAuthorities().iterator().next().getAuthority();
+
+        if (role == null) {
+            throw new AppException("Die Rolle des Benutzers ist ungültig (null).");
+        }
+
+        java.util.List<AppointmentResponseDto> myAppointments;
+
+        if (role.equals("ROLE_DOCTOR")) {
+            myAppointments = appointmentService.getAppointmentsForDoctor(userEmail);
+        } else if (role.equals("ROLE_PATIENT")) {
+            myAppointments = appointmentService.getAppointmentsForPatient(userEmail);
+        } else {
+            throw new AppException("Unbekannte Rolle: " + role);
+        }
+
+        return ResponseEntity.ok(myAppointments);
     }
 }
