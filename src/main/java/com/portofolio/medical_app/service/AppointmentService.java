@@ -54,4 +54,19 @@ public class AppointmentService {
         return appointmentMapper.toResponseDto(savedAppointment);
     }
 
+    //Diese Methode gibt eine Liste von Uhrzeiten zurück, die beim Arzt schon "besetzt" sind
+    public java.util.List<LocalDateTime> getBookedTimeSlots(Long doctorId, java.time.LocalDate date) {
+        //Wir definieren den Anfang und das Ende des Tages
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(23,59,59);
+
+        //Wir hollen alle Termine aus der Datenbank
+        java.util.List<Appointment> bookedAppointments =appointmentRepository.findAppointmentsByDoctorAndDay(doctorId, startOfDay, endOfDay);
+
+        //Wir extrahieren nur das Datum/Uhrzeit aus den Terminen (Keine Patientendatenm wegen DAtenschutz!)
+        return bookedAppointments.stream()
+                .map(Appointment::getAppointmentDate)
+                .toList();
+    }
+
 }
