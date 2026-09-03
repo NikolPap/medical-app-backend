@@ -42,7 +42,7 @@ public class LoginService {
            if(!user.isAccountNonLocked()) {
                throw new AppException("Zu viele Fehlversuche! Das Konto wurde aus Sicherheitsgründen gesperrt.");
            }
-            throw new RuntimeException("Falsche E-Mail oder Passwort.");
+            throw new AppException("Falsche E-Mail oder Passwort.");
         }
 
         // 4. PASSWORT RICHTIG! -> Fehlversuche auf 0 zurücksetzen
