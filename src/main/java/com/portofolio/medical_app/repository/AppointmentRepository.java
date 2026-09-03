@@ -21,4 +21,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("startOfDay") LocalDateTime startOfDay,
             @Param("endOfDay") LocalDateTime endOfDay
     );
+
+    // Hole alle Termine eines bestimmten Patienten (Sortiert nach Datum absteigend → Neueste zuerst)
+    java.util.List<Appointment> findByPatient_EmailOrderByAppointmentDateDesc(String patientEmail);
+
+    // Hole alle Termine eines bestimmten Arztes (Sortiert nach Datum absteigend)
+    java.util.List<Appointment> findByDoctor_EmailOrderByAppointmentDateDesc(String doctorEmail);
 }
