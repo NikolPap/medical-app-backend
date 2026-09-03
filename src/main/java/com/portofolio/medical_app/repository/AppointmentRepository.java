@@ -14,4 +14,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Appointment a WHERE a.doctor.id = :doctorId AND a.appointmentDate = :apptDate")
     boolean isDoctorBooked(@Param("doctorId") Long doctorId, @Param("apptDate") LocalDateTime apptDate);
 
+    // Wir suchen alle Termine eines bestimmten Arztes an einem bestimmten Tag (von 00:00 bis 23:59 Uhr)
+    @Query("SELECT a FROM Appointment a WHERE a.doctor.id = :doctorId AND a.appointmentDate >= :startOfDay AND a.appointmentDate <= :endOfDay AND a.status != 'CANCELLED'")
+    java.util.List<Appointment> findAppointmentsByDoctorAndDay(
+            @Param("doctorId") Long doctorId,
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("endOfDay") LocalDateTime endOfDay
+    );
 }
