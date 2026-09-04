@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Component
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class TokenCleanupJob {
     public void cleanupTokens() {
         LOGGER.info("Starte nächtlichen Cleanup-Job für abgelaufene Tokens...");
 
-        verificationTokenRepository.deleteExpiredTokens(LocalDateTime.now());
+        verificationTokenRepository.deleteExpiredTokens(LocalDateTime.now(ZoneId.systemDefault()));
 
         LOGGER.info("✨ Cleanup-Job erfolgreich beendet.");
     }
