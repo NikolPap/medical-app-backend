@@ -57,7 +57,7 @@ public class AuthController {
 
     //POST-Request zum Einloggen (URL: http://localhost:8080/api/auth/lögin)
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDto request) {
+    public ResponseEntity<Object> login(@RequestBody LoginRequestDto request) {
         try {
             AuthResponseDto responseDto = loginService.login(request);
 
