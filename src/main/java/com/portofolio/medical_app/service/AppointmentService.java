@@ -13,14 +13,21 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
 public class AppointmentService {
 
+    private static final String STATUS_CONFIRMED = "CONFIRMED";
+    private static final String STATUS_CANCELLED = "CANCELLED";
+    private static final String STATUS_PENDING = "PENDING";
+
     private final AppointmentRepository appointmentRepository;
     private final AppUserRepository appUserRepository;
     private final AppointmentMapper appointmentMapper;
+    private final EmailService emailService;
 
     // Methode zum Erstellen eines neuen Termins
     public AppointmentResponseDto createAppointment(AppointmentRequestDto request, String patientEmail) {
@@ -45,7 +52,7 @@ public class AppointmentService {
         //Alles in Ordnung! dem Terminbauen und speichern
         Appointment appointment = new Appointment();
         appointment.setAppointmentDate(request.appointmentDate());
-        appointment.setStatus("PENDING");
+        appointment.setStatus(STATUS_PENDING);
         appointment.setPatient(patient);
         appointment.setDoctor(doctor);
 
@@ -60,10 +67,10 @@ public class AppointmentService {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(23,59,59);
 
-        //Wir hollen alle Termine aus der Datenbank
+        //Wir holen alle Termine aus der Datenbank
         java.util.List<Appointment> bookedAppointments =appointmentRepository.findAppointmentsByDoctorAndDay(doctorId, startOfDay, endOfDay);
 
-        //Wir extrahieren nur das Datum/Uhrzeit aus den Terminen (Keine Patientendatenm wegen DAtenschutz!)
+        //Wir extrahieren nur das Datum/Uhrzeit aus den Terminen (Keine Patientendaten wegen DAtenschutz!)
         return bookedAppointments.stream()
                 .map(Appointment::getAppointmentDate)
                 .toList();
@@ -91,4 +98,54 @@ public class AppointmentService {
                 .toList();
     }
 
+    //Methode zum Aktualisieren des Status (Nur für Ärzte)
+    public AppointmentResponseDto updateAppointmentStatus(Long appointmentId, String newStatus, String userEmail,String userRole ) {
+
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new AppException("Termin nicht gefunden"));
+
+        //Status validieren
+        if (!STATUS_CONFIRMED.equals(newStatus) && !STATUS_CANCELLED.equals(newStatus)) {
+            throw new AppException("Ungültiger Status. Erlaubt sind nur CONFIRMED oder CANCELLED.");
+        }
+
+        //Regeln für den Arzt
+        if ("ROLE_DOCTOR".equals(userRole)) {
+            if (!appointment.getDoctor().getEmail().equals(userEmail)) {
+                throw new AppException("Du bist nicht berechtigt, diesen Termin zu ändern.");
+            }
+        }
+        // REGELN FÜR DEN PATIENTEN
+        else if ("ROLE_PATIENT".equals(userRole)) {
+            if (!appointment.getPatient().getEmail().equals(userEmail)) {
+                throw new AppException("Dies ist nicht dein Termin.");
+            }
+            // Patienten dürfen Termine NUR absagen, niemals bestätigen!
+            if (STATUS_CONFIRMED.equals(newStatus)) {
+                throw new AppException("Patienten können Termine nicht selbst bestätigen.");
+            }
+         //48-Stunden-Regel: Absage nur, wenn der Termin mehr als 48 Stunden in der Zukunft liegt!
+            ZonedDateTime nowZoned = ZonedDateTime.now(ZoneId.systemDefault());
+            ZonedDateTime appointmentZoned = appointment.getAppointmentDate().atZone(ZoneId.systemDefault());
+
+            long hoursUntilAppointment = ChronoUnit.HOURS.between(nowZoned, appointmentZoned);
+
+            if (hoursUntilAppointment < 48) {
+                throw new AppException("Eine Stornierung ist nur bis 48 Stunden vor dem Termin möglich. Bitte kontaktiere die Praxis telefonisch.");
+            }
+        }
+        //STATUS ÄNDERN UND SPEICHERN
+        appointment.setStatus(newStatus);
+        Appointment updatedAppointment = appointmentRepository.save(appointment);
+
+        if (STATUS_CONFIRMED.equals(newStatus)) {
+            emailService.sendStatusEmail(appointment.getPatient().getEmail(), "Dein Termin am " + appointment.getAppointmentDate() + " wurde vom Arzt BESTÄTIGT.");
+        } else {
+            // SonarQube Fix: Da es nur CONFIRMED oder CANCELLED geben kann, ist hier automatisch CANCELLED!
+            emailService.sendStatusEmail(appointment.getPatient().getEmail(), "Der Termin am " + appointment.getAppointmentDate() + " wurde STORNIERT.");
+            emailService.sendStatusEmail(appointment.getDoctor().getEmail(), "Ein Termin am " + appointment.getAppointmentDate() + " wurde STORNIERT.");
+        }
+
+        return appointmentMapper.toResponseDto(updatedAppointment);
+    }
 }
