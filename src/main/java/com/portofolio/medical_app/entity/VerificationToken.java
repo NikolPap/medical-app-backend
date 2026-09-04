@@ -3,6 +3,7 @@ package com.portofolio.medical_app.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode; // NEU IMPORTIERT
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -10,9 +11,11 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "verification_token")
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class VerificationToken extends BaseEntity{
+public class VerificationToken extends BaseEntity {
+
     @Column(nullable = false, unique = true)
     private String token;
 
@@ -20,7 +23,7 @@ public class VerificationToken extends BaseEntity{
     private LocalDateTime expiresAt;
 
     @OneToOne
-    @JoinColumn(name= "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
 
     @Column(nullable = false)
