@@ -22,19 +22,19 @@ public class Appointment {
     private LocalDateTime appointmentDate; //Datum und Uhrzeit des Termins
 
     @Column(nullable = false)
-    private String status; //z.B. "PENDING" (Ausstehend"), "CONFIRMED",(Bestätigt), "CANCELLED"(Storniert)
+    private String status; //z.B. "PENDING" (Ausstehend), "CONFIRMED",(Bestätigt), "CANCELLED"(Storniert)
 
     // ===================================
-    // BEZIEUNGEN ZU ANDEREN TABELLEN (Foreign Keys)
+    // BEZIEHUNGEN ZU ANDEREN TABELLEN (Foreign Keys)
     // ===================================
 
     //
-    @ManyToOne //Viele Termine können zu Einem Patienten gehören
+    @ManyToOne //Viele Termine können zu einem Patienten gehören
     @JoinColumn(name = "patient_id", nullable = false) //Das erstellt die Spalte "patient_id" in der Datenbank
     private AppUser patient;
 
     //Welcher Arzt ist züstandig?
-    @ManyToOne // Viele Termine könnem zu einem Arzt gehören
+    @ManyToOne // Viele Termine können zu einem Arzt gehören
     @JoinColumn(name = "doctor_id", nullable = false) // Das erstellt die Spalte "doctor_id" in der DAtenbank
     private AppUser doctor;
 }
