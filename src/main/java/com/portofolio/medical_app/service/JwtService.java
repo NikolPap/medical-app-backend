@@ -7,10 +7,13 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings({"all"})
 @Service
 public class JwtService {
 
@@ -26,13 +29,16 @@ public class JwtService {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("role", user.getRole());
 
+        Instant now = Instant.now();
+        Instant expiration = now.plus(24, ChronoUnit.HOURS); // Läuft in 24 Stunden ab
+
         return Jwts.builder()
-                .setClaims(extraClaims) // Unsere Extra-Daten
-                .setSubject(user.getEmail()) // Wer ist der Besitzer? (E-Mail)
-                .setIssuedAt(new Date(System.currentTimeMillis())) // Wann wurde der Token erstellt?
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // Läuft ab in 24 Stunden
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512) // Mit unserem Geheimnis unterschreiben
-                .compact(); // Alles zu einem langen String (Token) zusammenpressen
+                .setClaims(extraClaims)
+                .setSubject(user.getEmail())
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(expiration))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .compact();
     }
 
     // Hilfsmethode, um unseren String-Schlüssel in einen echten kryptografischen Key zu verwandeln
@@ -54,7 +60,7 @@ public class JwtService {
 
     //(Hilfsmethode) Entschlüsselt das Token mit unserem geheimen Schlüssel
     private boolean isTokenExpired(String token) {
-        return extractAllClaims(token).getExpiration().before(new Date());
+        return extractAllClaims(token).getExpiration().before(Date.from(java.time.Instant.now()));
     }
 
     //Entschlüsselt das Token mit unserem geheimen Schlüssel
