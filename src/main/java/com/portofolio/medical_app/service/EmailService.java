@@ -1,6 +1,5 @@
 package com.portofolio.medical_app.service;
 
-import com.portofolio.medical_app.exception.AppException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -16,12 +15,14 @@ public class EmailService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
 
+    private static final String SENDER_EMAIL = "noreply@medical-app.com";
+
     private final JavaMailSender mailSender;
 
     public void sendVerificationEmail(String toEmail, String token) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom("noreply@medical-app.com");
+            message.setFrom(SENDER_EMAIL);
             message.setTo(toEmail);
             message.setSubject("Bestätige deine E-mail-Adresse");
             message.setText("Willkommen! Dein Bestätigungscode lautet: " + token + "\nDieser Code ist 15 Minuten gültig.");
@@ -30,7 +31,7 @@ public class EmailService {
 
             LOGGER.info("E-Mail adresse: {}", toEmail);
 
-            System.out.println("🔐 Der Code lautet: {}" + token);
+            LOGGER.info("🔐 Der Code lautet: {}", token);
 
         } catch (Exception e) {
             LOGGER.error("Fehler beim Senden der E-Mail: {}", e.getMessage());
@@ -41,7 +42,7 @@ public class EmailService {
     public void sendPasswordResetEmail(String toEmail, String token) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom("noreply@medical-app.com");
+            message.setFrom(SENDER_EMAIL);
             message.setTo(toEmail);
             message.setSubject("Reset Password");
             message.setText("Du hast eine Anfrage zum Zurücksetzen deines Passworts gestellt.\n" +
@@ -51,6 +52,21 @@ public class EmailService {
             LOGGER.info("📧 Passwort-Reset-E-Mail erfolgreich gesendet an: {}", toEmail);
         } catch (Exception e) {
             LOGGER.warn("⚠️ FALLBACK: Der Passwort-Reset-Code für {} ist: {}", toEmail, token);
+        }
+    }
+
+    public void sendStatusEmail(String toEmail, String messageBody) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(SENDER_EMAIL);
+            message.setTo(toEmail);
+            message.setSubject("Termin-Update");
+            message.setText(messageBody);
+
+            mailSender.send(message);
+            LOGGER.info("📧 Status-Update gesendet an: {}", toEmail);
+        } catch (Exception e) {
+            LOGGER.warn("⚠️ FALLBACK EMAIL an {}: {}", toEmail, messageBody);
         }
     }
 
