@@ -89,4 +89,33 @@ public class AppointmentController {
 
         return ResponseEntity.ok(myAppointments);
     }
+
+    //Put-Request: Status eines Termins ändern (Nur für Ärzte!)
+    @PutMapping("/{id}/status")
+    public ResponseEntity<Object> updateStatus(
+            @PathVariable Long id,
+            @RequestParam String status) {
+
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || authentication.getName() == null) {
+                throw new AppException("Authentifizierungsdaten fehlen.");
+            }
+
+            String userEmail = authentication.getName();
+
+            // 1. Wir holen die Rolle aus dem Token (Muss existieren!)
+            if (authentication.getAuthorities().isEmpty()) {
+                throw new AppException("Keine Rolle gefunden.");
+            }
+            String userRole = authentication.getAuthorities().iterator().next().getAuthority();
+
+            AppointmentResponseDto response = appointmentService.updateAppointmentStatus(id, status, userEmail, userRole);
+
+            return ResponseEntity.ok(response);
+
+        } catch (AppException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
+    }
 }
