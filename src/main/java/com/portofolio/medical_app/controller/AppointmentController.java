@@ -118,4 +118,13 @@ public class AppointmentController {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/available-slots")
+    public ResponseEntity<java.util.List<String>> getAvailableSlots(
+            @RequestParam Long doctorId,
+            @RequestParam java.time.LocalDate date) {
+
+        java.util.List<String> availableSlots = appointmentService.getAvailableTimeSlots(doctorId, date);
+        return ResponseEntity.ok(availableSlots);
+    }
 }
