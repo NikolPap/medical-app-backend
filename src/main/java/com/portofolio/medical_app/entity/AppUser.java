@@ -40,6 +40,9 @@ public class AppUser extends BaseEntity implements UserDetails {
     @Column(nullable = false)
     private boolean accountNonLocked = true;
 
+    @Column(nullable = false)
+    private int slotDuration = 30;
+
 
     // =========================================================
     // SPRING SECURITY USERDETAILS METHODEN
