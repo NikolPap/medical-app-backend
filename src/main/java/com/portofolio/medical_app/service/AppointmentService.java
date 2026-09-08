@@ -12,9 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -26,32 +28,40 @@ public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final AppUserRepository appUserRepository;
+    private final com.portofolio.medical_app.repository.DoctorScheduleRepository doctorScheduleRepository;
     private final AppointmentMapper appointmentMapper;
     private final EmailService emailService;
 
     // Methode zum Erstellen eines neuen Termins
+    // Methode zum Erstellen eines neuen Termins
     public AppointmentResponseDto createAppointment(AppointmentRequestDto request, String patientEmail) {
 
+        // Wir bauen das LocalDateTime aus Datum + Uhrzeit zusammen!
+        LocalDateTime fullAppointmentDateTime = request.appointmentDate().atTime(LocalTime.parse(request.appointmentTime()));
+
         // Termine dürfen nicht in der Vergangenheit liegen!
-        if (request.appointmentDate().isBefore(LocalDateTime.now(ZoneId.systemDefault()))) {
+        if (fullAppointmentDateTime.isBefore(LocalDateTime.now(ZoneId.systemDefault()))) {
             throw new AppException("Termine können nicht in der Vergangenheit gebucht werden.");
         }
 
-        //Lade den Patienten (Wir wissen durch das JWT genau , wer er ist!)
         AppUser patient = appUserRepository.findByEmail(patientEmail)
                 .orElseThrow(() -> new AppException("Patient nicht gefunden"));
 
         AppUser doctor = appUserRepository.findById(request.doctorId())
                 .orElseThrow(() -> new AppException("Arzt nicht gefunden."));
 
-        // Sicherheits-check: Hat der Arzt um diese Uhrzeit schon einen Termin?
-        if (appointmentRepository.isDoctorBooked(doctor.getId(), request.appointmentDate())) {
+        // Sicherheits-check: Hat der Arzt um DIESE Uhrzeit schon einen Termin?
+        // (Wir nutzen hier fullAppointmentDateTime!)
+        if (appointmentRepository.isDoctorBooked(doctor.getId(), fullAppointmentDateTime)) {
             throw new AppException("Dieser Termin ist beim ausgewählten Arzt bereits belegt.");
         }
 
-        //Alles in Ordnung! dem Terminbauen und speichern
+        // Alles in Ordnung! Termin bauen und speichern
         Appointment appointment = new Appointment();
-        appointment.setAppointmentDate(request.appointmentDate());
+
+        // HIER AUCH DAS VOLLE DATUM MIT UHRZEIT NUTZEN!
+        appointment.setAppointmentDate(fullAppointmentDateTime);
+
         appointment.setStatus(STATUS_PENDING);
         appointment.setPatient(patient);
         appointment.setDoctor(doctor);
@@ -147,5 +157,46 @@ public class AppointmentService {
         }
 
         return appointmentMapper.toResponseDto(updatedAppointment);
+    }
+
+    // DIE INTELLIGENTE VERFÜGBARKEITS-MASCHINE
+    public java.util.List<String> getAvailableTimeSlots(Long doctorId, java.time.LocalDate date) {
+        AppUser doctor = appUserRepository.findById(doctorId)
+                .orElseThrow(() -> new AppException("Arzt nicht gefunden."));
+
+        int slotDurationMinutes = doctor.getSlotDuration(); // <-- NEU: Dynamische Dauer!
+
+        java.time.DayOfWeek dayOfWeek = date.getDayOfWeek();
+
+        java.util.List<com.portofolio.medical_app.entity.DoctorSchedule> dailySchedules =
+                doctorScheduleRepository.findAllByDoctorIdAndDayOfWeek(doctorId, dayOfWeek);
+
+        if (dailySchedules.isEmpty()) {
+            return new ArrayList<>();
+        }
+        java.util.List<LocalDateTime> bookedSlots = getBookedTimeSlots(doctorId, date);
+        java.util.List<String> availableSlots = new ArrayList<>();
+
+        for (com.portofolio.medical_app.entity.DoctorSchedule schedule : dailySchedules) {
+            LocalTime currentSlotTime = schedule.getStartTime();
+            LocalTime workEnd = schedule.getEndTime();
+
+            while (currentSlotTime.isBefore(workEnd)) {
+                if (currentSlotTime.plusMinutes(slotDurationMinutes).isAfter(workEnd)) {
+                    break;
+                }
+
+                LocalDateTime slotDateTime = date.atTime(currentSlotTime);
+                boolean isAlreadyBooked = bookedSlots.contains(slotDateTime);
+                boolean isPast = slotDateTime.isBefore(LocalDateTime.now(ZoneId.systemDefault()));
+
+                if (!isAlreadyBooked && !isPast) {
+                    availableSlots.add(currentSlotTime.toString());
+                }
+                currentSlotTime = currentSlotTime.plusMinutes(slotDurationMinutes);
+            }
+        }
+
+        return availableSlots.stream().sorted().toList();
     }
 }
