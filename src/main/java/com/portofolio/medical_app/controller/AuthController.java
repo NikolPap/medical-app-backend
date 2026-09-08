@@ -1,6 +1,7 @@
 package com.portofolio.medical_app.controller;
 
 import com.portofolio.medical_app.dto.*;
+import com.portofolio.medical_app.entity.AppUser;
 import com.portofolio.medical_app.exception.AppException;
 import com.portofolio.medical_app.service.AuthService;
 import com.portofolio.medical_app.service.LoginService;
@@ -8,10 +9,10 @@ import com.portofolio.medical_app.service.PasswordResetService;
 import com.portofolio.medical_app.service.VerificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,6 +22,8 @@ public class AuthController {
     private final VerificationService verificationService;
     private final LoginService loginService;
     private final PasswordResetService passwordResetService;
+
+    private final com.portofolio.medical_app.repository.AppUserRepository appUserRepository;
 
     //POST-Request zum Registrieren (URL: http://localhost:8080/api/auth/register)
     @PostMapping("/register")
@@ -89,5 +92,19 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/doctors")
+    public ResponseEntity<List<Map<String, Object>>> getAllDoctors() {
+        // Wir holen nur die Ärzte aus der DB
+        List<AppUser> doctors = appUserRepository.findByRole("ROLE_DOCTOR");
 
+        // Wir mappen das sicher (Wir schicken NIEMALS das Passwort oder so ans Frontend!)
+        List<java.util.Map<String, Object>> doctorList = doctors.stream().map(doc -> {
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", doc.getId());
+            map.put("email", doc.getEmail());
+            return map;
+        }).toList();
+
+        return ResponseEntity.ok(doctorList);
+    }
 }
