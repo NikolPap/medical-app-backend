@@ -93,15 +93,16 @@ public class AuthController {
     }
 
     @GetMapping("/doctors")
-    public ResponseEntity<List<Map<String, Object>>> getAllDoctors() {
-        // Wir holen nur die Ärzte aus der DB
+    public ResponseEntity<List<java.util.Map<String, Object>>> getAllDoctors() {
+
         List<AppUser> doctors = appUserRepository.findByRole("ROLE_DOCTOR");
 
-        // Wir mappen das sicher (Wir schicken NIEMALS das Passwort oder so ans Frontend!)
         List<java.util.Map<String, Object>> doctorList = doctors.stream().map(doc -> {
             java.util.Map<String, Object> map = new java.util.HashMap<>();
             map.put("id", doc.getId());
             map.put("email", doc.getEmail());
+            // HIER IST DAS FEHLENDE STÜCK!
+            map.put("slotDuration", doc.getSlotDuration());
             return map;
         }).toList();
 
