@@ -18,6 +18,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DoctorScheduleController {
 
+    private static final String ROLE_DOCTOR = "ROLE_DOCTOR";
+    private static final String RESPONSE_KEY_ERROR = "error";
+
     private final DoctorScheduleService doctorScheduleService;
     private final com.portofolio.medical_app.repository.AppUserRepository appUserRepository;
 
@@ -34,7 +37,7 @@ public class DoctorScheduleController {
 
             String role = authentication.getAuthorities().iterator().next().getAuthority();
 
-            if (!"ROLE_DOCTOR".equals(role)) {
+            if (!ROLE_DOCTOR.equals(role)) {
                 throw new AppException("Nur Ärzte können Arbeitszeiten festlegen!");
             }
 
@@ -42,7 +45,7 @@ public class DoctorScheduleController {
             return ResponseEntity.ok(new RegisterResponseDto("Arbeitszeit erfolgreich gespeichert."));
 
         } catch (AppException e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(java.util.Map.of(RESPONSE_KEY_ERROR, e.getMessage()));
         }
     }
 
@@ -72,7 +75,7 @@ public class DoctorScheduleController {
 
             String role = authentication.getAuthorities().iterator().next().getAuthority();
 
-            if (!"ROLE_DOCTOR".equals(role)) {
+            if (!ROLE_DOCTOR.equals(role)) {
                 throw new AppException("Nur Ärzte können Arbeitszeiten löschen!");
             }
 
@@ -80,7 +83,7 @@ public class DoctorScheduleController {
             return ResponseEntity.ok(new RegisterResponseDto("Arbeitszeit erfolgreich gelöscht."));
 
         } catch (AppException e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(java.util.Map.of(RESPONSE_KEY_ERROR, e.getMessage()));
         }
     }
 
@@ -93,7 +96,7 @@ public class DoctorScheduleController {
                 throw new AppException("Authentifizierungsdaten fehlen.");
             }
 
-            if (!"ROLE_DOCTOR".equals(authentication.getAuthorities().iterator().next().getAuthority())) {
+            if (!ROLE_DOCTOR.equals(authentication.getAuthorities().iterator().next().getAuthority())) {
                 throw new AppException("Nur Ärzte können die Termin-Dauer ändern!");
             }
 
@@ -110,7 +113,7 @@ public class DoctorScheduleController {
             return ResponseEntity.ok(new RegisterResponseDto("Termin-Dauer erfolgreich auf " + minutes + " Minuten geändert."));
 
         } catch (AppException e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(java.util.Map.of(RESPONSE_KEY_ERROR, e.getMessage()));
         }
     }
 }
