@@ -76,4 +76,24 @@ public class PasswordResetService {
         passwordResetTokenRepository.save(resetToken);
     }
 
+    // NEU: Prüft nur, ob der Code korrekt ist (für Step 1 im Frontend)
+    public void verifyResetCode(String email, String code) {
+
+        AppUser user = appUserRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException("Benutzer nicht gefunden."));
+
+        PasswordResetToken resetToken = passwordResetTokenRepository.findValidTokenByEmail(user.getEmail())
+                .orElseThrow(() -> new AppException("Kein gültiger Reset-Code gefunden."));
+
+        if (resetToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException("Der Code ist abgelaufen. Bitte fordere einen neuen an.");
+        }
+
+        if (!passwordEncoder.matches(code, resetToken.getToken())) {
+            throw new AppException("Falscher Bestätigungscode!");
+        }
+
+        // Wenn alles stimmt, werfen wir keine Exception! Der Controller meldet "200 OK".
+    }
+
 }
