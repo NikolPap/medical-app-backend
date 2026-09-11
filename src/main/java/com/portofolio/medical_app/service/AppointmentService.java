@@ -30,6 +30,7 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final AppUserRepository appUserRepository;
     private final com.portofolio.medical_app.repository.DoctorScheduleRepository doctorScheduleRepository;
+    private final com.portofolio.medical_app.repository.DoctorHolidayRepository doctorHolidayRepository;
     private final AppointmentMapper appointmentMapper;
     private final EmailService emailService;
 
@@ -141,19 +142,6 @@ public class AppointmentService {
         return appointmentMapper.toResponseDto(updatedAppointment);
     }
 
-    // --- SonarQube Fix: Hilfsmethode, um Cognitive Complexity zu reduzieren ---
-    private boolean isDayBlockedByDoctor(Long doctorId, java.time.LocalDate date) {
-        java.util.List<Appointment> allDayAppointments = appointmentRepository.findAppointmentsByDoctorAndDay(
-                doctorId, date.atStartOfDay(), date.atTime(23, 59, 59));
-
-        for (Appointment a : allDayAppointments) {
-            if (a.getPatient().getId().equals(doctorId) && STATUS_CONFIRMED.equals(a.getStatus())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     // DIE INTELLIGENTE VERFÜGBARKEITS-MASCHINE
     public java.util.List<String> getAvailableTimeSlots(Long doctorId, java.time.LocalDate date) {
 
@@ -171,8 +159,8 @@ public class AppointmentService {
         }
 
         // SonarQube Fix: Aufruf der neuen Hilfsmethode macht den Code extrem lesbar!
-        if (isDayBlockedByDoctor(doctorId, date)) {
-            return new ArrayList<>();
+        if (doctorHolidayRepository.existsByDoctorIdAndHolidayDate(doctorId, date)) {
+            return new ArrayList<>(); // Arzt hat Urlaub -> Keine freien Slots!
         }
 
         java.util.List<LocalDateTime> bookedSlots = getBookedTimeSlots(doctorId, date);
@@ -202,24 +190,4 @@ public class AppointmentService {
         return availableSlots.stream().sorted().toList();
     }
 
-    // Methode zum Blockieren eines ganzen Tages für einen Arzt
-    public void blockEntireDay(String doctorEmail, java.time.LocalDate date) {
-
-        AppUser doctor = appUserRepository.findByEmail(doctorEmail)
-                .orElseThrow(() -> new AppException(MSG_DOCTOR_NOT_FOUND));
-
-        java.util.List<Appointment> existingAppointments = appointmentRepository.findAppointmentsByDoctorAndDay(
-                doctor.getId(), date.atStartOfDay(), date.atTime(23, 59, 59));
-
-        if (!existingAppointments.isEmpty()) {
-            throw new AppException("Du kannst diesen Tag nicht blockieren, da bereits Patienten Termine gebucht haben! Bitte storniere diese zuerst.");
-        }
-
-        Appointment blockAppointment = new Appointment();
-        blockAppointment.setAppointmentDate(date.atStartOfDay());
-        blockAppointment.setStatus(STATUS_CONFIRMED);
-        blockAppointment.setDoctor(doctor);
-        blockAppointment.setPatient(doctor);
-        appointmentRepository.save(blockAppointment);
-    }
 }
