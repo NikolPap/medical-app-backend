@@ -108,4 +108,16 @@ public class AuthController {
 
         return ResponseEntity.ok(doctorList);
     }
+
+    // POST: "Ist mein 6-stelliger Code richtig?" (Für Step 1)
+    @PostMapping("/verify-reset-code")
+    public ResponseEntity<RegisterResponseDto> verifyResetCode(@RequestBody VerificationRequestDto request) {
+        try {
+            // Wir nutzen hier das DTO, das wir schon für die normale Verifizierung haben! (Hat email und code)
+            passwordResetService.verifyResetCode(request.email(), request.code());
+            return ResponseEntity.ok(new RegisterResponseDto("Code ist korrekt!"));
+        } catch (AppException e) {
+            return ResponseEntity.badRequest().body(new RegisterResponseDto(e.getMessage()));
+        }
+    }
 }
