@@ -127,28 +127,4 @@ public class AppointmentController {
         java.util.List<String> availableSlots = appointmentService.getAvailableTimeSlots(doctorId, date);
         return ResponseEntity.ok(availableSlots);
     }
-
-    // POST: Arzt blockiert einen ganzen Tag (z.B. Urlaub / Feiertag)
-    @PostMapping("/block-day")
-    public ResponseEntity<Object> blockDay(@RequestParam java.time.LocalDate date) {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || authentication.getName() == null || authentication.getAuthorities().isEmpty()) {
-                throw new AppException("Authentifizierungsdaten fehlen.");
-            }
-
-            String role = authentication.getAuthorities().iterator().next().getAuthority();
-            if (!"ROLE_DOCTOR".equals(role)) {
-                throw new AppException("Nur Ärzte können Tage blockieren.");
-            }
-
-            String doctorEmail = authentication.getName();
-            appointmentService.blockEntireDay(doctorEmail, date);
-
-            return ResponseEntity.ok(java.util.Map.of("message", "Tag wurde erfolgreich blockiert."));
-
-        } catch (AppException e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
-        }
-    }
 }
