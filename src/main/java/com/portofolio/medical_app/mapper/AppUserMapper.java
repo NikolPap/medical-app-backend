@@ -8,13 +8,16 @@ import org.springframework.stereotype.Component;
 public class AppUserMapper {
 
     // Wir übergeben das DTO und das bereit verschlüsselte Password
-    public AppUser toEntity(final RegisterRequestDto dto,
-                            final String encodePassword) {
-
-        final AppUser user = new AppUser();
+    public AppUser toEntity(RegisterRequestDto dto, String encodedPassword) {
+        AppUser user = new AppUser();
         user.setEmail(dto.email());
-        user.setPassword(encodePassword);
+        user.setPassword(encodedPassword);
         user.setRole(dto.role());
+
+        user.setFirstName(dto.firstName());
+        user.setLastName(dto.lastName());
+        user.setSpecialty(dto.specialty());
+        user.setAddress(dto.address());
 
         return user;
     }
