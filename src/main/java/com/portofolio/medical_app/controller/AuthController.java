@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -101,7 +100,10 @@ public class AuthController {
             java.util.Map<String, Object> map = new java.util.HashMap<>();
             map.put("id", doc.getId());
             map.put("email", doc.getEmail());
-            // HIER IST DAS FEHLENDE STÜCK!
+            map.put("firstName", doc.getFirstName()); // NEU
+            map.put("lastName", doc.getLastName());   // NEU
+            map.put("specialty", doc.getSpecialty()); // NEU
+            map.put("address", doc.getAddress());     // NEU
             map.put("slotDuration", doc.getSlotDuration());
             return map;
         }).toList();
