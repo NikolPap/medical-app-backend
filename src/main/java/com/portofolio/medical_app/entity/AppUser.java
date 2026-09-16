@@ -29,6 +29,20 @@ public class AppUser extends BaseEntity implements UserDetails {
     private String password;
 
     @Column(nullable = false)
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
+
+    // Optional: Nur für Ärzte relevant (Patienten haben das leer/null)
+    @Column
+    private String specialty;
+
+    // Optional: Nur für Ärzte relevant (Könnte auch für Patienten genutzt werden)
+    @Column
+    private String address;
+
+    @Column(nullable = false)
     private String role;
 
     @Column(nullable = false)
@@ -42,6 +56,7 @@ public class AppUser extends BaseEntity implements UserDetails {
 
     @Column(nullable = false)
     private int slotDuration = 30;
+
 
 
     // =========================================================
