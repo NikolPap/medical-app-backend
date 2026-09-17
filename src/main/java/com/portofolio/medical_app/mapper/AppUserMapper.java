@@ -18,6 +18,9 @@ public class AppUserMapper {
         user.setLastName(dto.lastName());
         user.setSpecialty(dto.specialty());
         user.setAddress(dto.address());
+        user.setPhoneNumber(dto.phoneNumber());
+        user.setGender(dto.gender());
+        user.setInsuranceType(dto.insuranceType());
 
         return user;
     }
