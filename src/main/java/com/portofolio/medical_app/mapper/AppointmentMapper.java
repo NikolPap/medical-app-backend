@@ -11,12 +11,18 @@ public class AppointmentMapper {
     public AppointmentResponseDto toResponseDto(Appointment appointment) {
         return new AppointmentResponseDto(
                 appointment.getId(),
+
                 appointment.getDoctor().getEmail(),
-                appointment.getDoctor().getFirstName() + " " + appointment.getDoctor().getLastName(), // NEU
-                appointment.getDoctor().getSpecialty(), // NEU
+                appointment.getDoctor().getFirstName() + " " + appointment.getDoctor().getLastName(),
+                appointment.getDoctor().getSpecialty(),
+                appointment.getDoctor().getAddress(),       // NEU
+                appointment.getDoctor().getPhoneNumber(),   // NEU
 
                 appointment.getPatient().getEmail(),
-                appointment.getPatient().getFirstName() + " " + appointment.getPatient().getLastName(), // NEU
+                appointment.getPatient().getFirstName() + " " + appointment.getPatient().getLastName(),
+                appointment.getPatient().getPhoneNumber(),  // NEU
+                appointment.getPatient().getGender(),       // NEU
+                appointment.getPatient().getInsuranceType(),// NEU
 
                 appointment.getAppointmentDate(),
                 appointment.getStatus()
