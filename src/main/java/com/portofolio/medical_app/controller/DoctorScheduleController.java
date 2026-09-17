@@ -7,6 +7,7 @@ import com.portofolio.medical_app.exception.AppException;
 import com.portofolio.medical_app.service.DoctorScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/schedules")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('ROLE_DOCTOR')") // <-- SPERRT DEN KOMPLETTEN CONTROLLER FÜR PATIENTEN!
 public class DoctorScheduleController {
 
     private static final String ROLE_DOCTOR = "ROLE_DOCTOR";
