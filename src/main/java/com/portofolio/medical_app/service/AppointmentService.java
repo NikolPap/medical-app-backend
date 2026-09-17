@@ -9,6 +9,7 @@ import com.portofolio.medical_app.mapper.AppointmentMapper;
 import com.portofolio.medical_app.repository.AppUserRepository;
 import com.portofolio.medical_app.repository.AppointmentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -35,9 +36,13 @@ public class AppointmentService {
     private final EmailService emailService;
 
     // Methode zum Erstellen eines neuen Termins
-    public AppointmentResponseDto createAppointment(AppointmentRequestDto request, String patientEmail) {
-
-        LocalDateTime fullAppointmentDateTime = request.appointmentDate().atTime(LocalTime.parse(request.appointmentTime()));
+    @PreAuthorize("isFullyAuthenticated() && hasAuthority('ROLE_PATIENT')")
+    public AppointmentResponseDto createAppointment(
+            final AppointmentRequestDto request,
+            final String patientEmail
+    ) {
+        final LocalDateTime fullAppointmentDateTime =
+                request.appointmentDate().atTime(LocalTime.parse(request.appointmentTime()));
 
         if (fullAppointmentDateTime.isBefore(LocalDateTime.now(ZoneId.systemDefault()))) {
             throw new AppException("Termine können nicht in der Vergangenheit gebucht werden.");
