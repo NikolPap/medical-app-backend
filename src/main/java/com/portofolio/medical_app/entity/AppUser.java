@@ -42,6 +42,17 @@ public class AppUser extends BaseEntity implements UserDetails {
     @Column
     private String address;
 
+    @Column
+    private String phoneNumber;
+
+    // NEU: Geschlecht (MALE, FEMALE, DIVERS) - Nur für Patienten
+    @Column
+    private String gender;
+
+    // NEU: Versicherungsart (PRIVATE, GESETZLICH) - Nur für Patienten
+    @Column
+    private String insuranceType;
+
     @Column(nullable = false)
     private String role;
 
