@@ -6,6 +6,7 @@ import com.portofolio.medical_app.exception.AppException;
 import com.portofolio.medical_app.service.DoctorHolidayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/holidays")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('ROLE_DOCTOR')")
 public class DoctorHolidayController {
 
     private final DoctorHolidayService doctorHolidayService;
