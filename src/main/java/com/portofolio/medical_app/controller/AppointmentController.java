@@ -6,6 +6,7 @@ import com.portofolio.medical_app.exception.AppException;
 import com.portofolio.medical_app.service.AppointmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ public class AppointmentController {
 
     // Post-Request zum Buchen eines Termins (Nur erreichbar mit gültigem JWT-Token!)
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     public ResponseEntity<Object> createAppointment(@RequestBody AppointmentRequestDto request) {
 
         try {
@@ -55,6 +57,7 @@ public class AppointmentController {
 
     //Get_request: Mein Dashboard (Zeigt meine Termine, egal ob Arzt oder Patient)
     @GetMapping("/me")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT') or hasAuthority('ROLE_DOCTOR')")
     public ResponseEntity<java.util.List<AppointmentResponseDto>> getMyAppointments() {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -92,6 +95,7 @@ public class AppointmentController {
 
     //Put-Request: Status eines Termins ändern (Nur für Ärzte!)
     @PutMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT') or hasAuthority('ROLE_DOCTOR')")
     public ResponseEntity<Object> updateStatus(
             @PathVariable Long id,
             @RequestParam String status) {
