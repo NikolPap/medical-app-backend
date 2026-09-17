@@ -7,7 +7,10 @@ public record RegisterRequestDto(
         String firstName,
         String lastName,
         String specialty,
-        String address
+        String address,
+        String phoneNumber,
+        String gender,
+        String insuranceType
 ) {
 
 }
