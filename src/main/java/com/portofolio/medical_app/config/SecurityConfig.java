@@ -3,11 +3,9 @@ package com.portofolio.medical_app.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,22 +24,25 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
 
-    //1. Der Passwort-Vershlüsseler (BCrypt ist der Industrie-Standard)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    //2. Die Sicherheitsregeln (Wer darf was?)
     @SuppressWarnings("squid:S4502")
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) {
 
         try {
             http
-                    // SonarQube Fix 2: Method Reference statt Lambda
                     .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                    .csrf(AbstractHttpConfigurer::disable)
+                    // CSRF AKTIVIERT: Token wird als Cookie "XSRF-TOKEN" gesetzt,
+                    // muss vom Client im Header "X-XSRF-TOKEN" zurückgeschickt werden.
+                    .csrf(csrf -> csrf
+                            .spa()
+                            // Login/Register brauchen kein CSRF-Token (kein Cookie-Login, kein bestehendes Token vorhanden)
+                            .ignoringRequestMatchers("/api/auth/**")
+                    )
                     .headers(headers -> headers.frameOptions(org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig::disable))
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                     .authorizeHttpRequests(auth -> auth
@@ -54,7 +55,6 @@ public class SecurityConfig {
             return http.build();
 
         } catch (Exception e) {
-            // SonarQube Fix 3: Wir fangen mögliche Setup-Fehler ab und werfen unsere EIGENE Custom Exception
             throw new com.portofolio.medical_app.exception.AppException("Fehler bei der Security-Konfiguration: " + e.getMessage(), e);
         }
     }
@@ -63,20 +63,16 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Wer darf mit uns sprechen? (Die Angular App!)
         configuration.setAllowedOrigins(List.of("http://localhost:4200"));
-
-        // Welche Methoden sind erlaubt?
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
-        // Welche Header dürfen mitgeschickt werden? (WICHTIG FÜR JWT!)
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        // WICHTIG: X-XSRF-TOKEN muss erlaubt sein, sonst blockiert der Browser den Header!
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-XSRF-TOKEN"));
 
-        // Dürfen Cookies/Credentials gesendet werden?
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Gilt für ALLE Endpoints
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
