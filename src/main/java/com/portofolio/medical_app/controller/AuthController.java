@@ -122,4 +122,5 @@ public class AuthController {
             return ResponseEntity.badRequest().body(new RegisterResponseDto(e.getMessage()));
         }
     }
+
 }
