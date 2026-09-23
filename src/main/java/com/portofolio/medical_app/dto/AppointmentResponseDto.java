@@ -1,12 +1,14 @@
 package com.portofolio.medical_app.dto;
 
-import java.time.LocalDateTime;
-
 public record AppointmentResponseDto(
         Long id,
+        Long doctorId,          // 2. Platz: doctorId
+
+        // Arzt Infos
         String doctorEmail,
         String doctorName,
-        String doctorSpecialty, String doctorAddress,
+        String doctorSpecialty,
+        String doctorAddress,
         String doctorPhone,
 
         // Patient Infos
@@ -15,6 +17,7 @@ public record AppointmentResponseDto(
         String patientPhone,
         String patientGender,
         String patientInsurance,
+
         java.time.LocalDateTime appointmentDate,
         String status
 ) {}
