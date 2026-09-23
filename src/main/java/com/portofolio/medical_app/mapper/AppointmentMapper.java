@@ -7,26 +7,27 @@ import org.springframework.stereotype.Component;
 @Component
 public class AppointmentMapper {
 
-    //Wandelt das Datenbank-Object in ein JSON-freundliches DTO um
     public AppointmentResponseDto toResponseDto(Appointment appointment) {
         return new AppointmentResponseDto(
                 appointment.getId(),
+                appointment.getDoctor().getId(), // 2. Platz: doctorId
 
+                // Arzt Infos
                 appointment.getDoctor().getEmail(),
                 appointment.getDoctor().getFirstName() + " " + appointment.getDoctor().getLastName(),
                 appointment.getDoctor().getSpecialty(),
-                appointment.getDoctor().getAddress(),       // NEU
-                appointment.getDoctor().getPhoneNumber(),   // NEU
+                appointment.getDoctor().getAddress(),
+                appointment.getDoctor().getPhoneNumber(),
 
+                // Patient Infos
                 appointment.getPatient().getEmail(),
                 appointment.getPatient().getFirstName() + " " + appointment.getPatient().getLastName(),
-                appointment.getPatient().getPhoneNumber(),  // NEU
-                appointment.getPatient().getGender(),       // NEU
-                appointment.getPatient().getInsuranceType(),// NEU
+                appointment.getPatient().getPhoneNumber(),
+                appointment.getPatient().getGender(),
+                appointment.getPatient().getInsuranceType(),
 
                 appointment.getAppointmentDate(),
                 appointment.getStatus()
         );
     }
-    
 }
