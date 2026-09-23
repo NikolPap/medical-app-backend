@@ -6,7 +6,8 @@ import java.time.LocalDateTime;
 public record AppointmentRequestDto(
         Long doctorId,
         LocalDate appointmentDate,
-        String appointmentTime   ) {
+        String appointmentTime,
+        String patientEmail    ) {
 
 
 }
