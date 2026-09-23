@@ -36,7 +36,7 @@ public class AppointmentService {
     private final EmailService emailService;
 
     // Methode zum Erstellen eines neuen Termins
-    @PreAuthorize("isFullyAuthenticated() && hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT') or hasAuthority('ROLE_DOCTOR')")
     public AppointmentResponseDto createAppointment(
             final AppointmentRequestDto request,
             final String patientEmail
