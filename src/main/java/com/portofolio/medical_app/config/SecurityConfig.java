@@ -6,10 +6,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -24,55 +27,68 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
 
+    // 1. Der Passwort-Verschlüsseler (BCrypt ist der Industrie-Standard)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    @SuppressWarnings("squid:S4502")
+    // 2. Die Sicherheitsregeln (Wer darf was?)
+    @SuppressWarnings("squid:S4502") // CSRF wird absichtlich deaktiviert (Stateless JWT Architektur)
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) {
-
         try {
             http
+                    // CORS aktivieren, damit Angular mit uns sprechen darf
                     .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                    // CSRF AKTIVIERT: Token wird als Cookie "XSRF-TOKEN" gesetzt,
-                    // muss vom Client im Header "X-XSRF-TOKEN" zurückgeschickt werden.
-                    .csrf(csrf -> csrf
-                            .spa()
-                            // Login/Register brauchen kein CSRF-Token (kein Cookie-Login, kein bestehendes Token vorhanden)
-                            .ignoringRequestMatchers("/api/auth/**")
-                    )
-                    .headers(headers -> headers.frameOptions(org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig::disable))
+
+                    // SonarQube Fix 2: Method Reference statt Lambda
+                    .csrf(AbstractHttpConfigurer::disable)
+
+                    // X-Frame-Options deaktivieren (z.B. für H2 Konsolen oder iFrames)
+                    .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+
+                    // Stateless Session Management (Wichtig für JWT)
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                    // Endpunkte konfigurieren
                     .authorizeHttpRequests(auth -> auth
+                            // Diese URLs dürfen von JEDEM aufgerufen werden (z.B. Registrierung / Login / Freie Slots)
                             .requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers("/api/appointments/available-slots").permitAll()
+                            // Für ALLE anderen URLs muss man eingeloggt sein!
                             .anyRequest().authenticated()
                     )
-                    .addFilterBefore(jwtAuthFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                    // Unseren JWT Filter an die Tür stellen!
+                    .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
             return http.build();
 
         } catch (Exception e) {
+            // SonarQube Fix 3: Wir fangen mögliche Setup-Fehler ab und werfen unsere EIGENE Custom Exception
             throw new com.portofolio.medical_app.exception.AppException("Fehler bei der Security-Konfiguration: " + e.getMessage(), e);
         }
     }
 
+    // 3. CORS Konfiguration
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
+        // Wer darf mit uns sprechen? (Die Angular App!)
         configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+
+        // Welche Methoden sind erlaubt?
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
-        // WICHTIG: X-XSRF-TOKEN muss erlaubt sein, sonst blockiert der Browser den Header!
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-XSRF-TOKEN"));
+        // Welche Header dürfen mitgeschickt werden? (WICHTIG FÜR JWT!)
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 
+        // Dürfen Cookies/Credentials gesendet werden?
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", configuration); // Gilt für ALLE Endpoints
         return source;
     }
 }
