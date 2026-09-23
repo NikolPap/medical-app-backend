@@ -19,29 +19,40 @@ public class AppointmentController {
 
     private final AppointmentService appointmentService;
 
-    // Post-Request zum Buchen eines Termins (Nur erreichbar mit gültigem JWT-Token!)
+    // POST-Request zum Buchen eines Termins (Jetzt für Patienten UND Ärzte beim Verschieben)
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT') or hasAuthority('ROLE_DOCTOR')") // <-- WICHTIG: Beide Rollen erlauben
     public ResponseEntity<Object> createAppointment(@RequestBody AppointmentRequestDto request) {
 
         try {
-            // Wir hollen uns die Identität des eingeloggten Nutzers!
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication == null || authentication.getName() == null) {
                 throw new AppException("Authentifizierungsdaten fehlen. Bitte logge dich erneut ein.");
             }
 
-            String patientEmail = authentication.getName();
+            // Wir holen die Rolle aus dem Token
+            String role = authentication.getAuthorities().iterator().next().getAuthority();
+            String patientEmailForBooking;
 
-            AppointmentResponseDto response = appointmentService.createAppointment(request, patientEmail);
+            // HIER IST DEIN CODE:
+            // Wenn der Arzt bucht, MUSS er uns die E-Mail des Patienten mitschicken
+            // Wenn der Patient bucht, ignorieren wir das Feld und nehmen die E-Mail aus seinem Token!
+            if ("ROLE_DOCTOR".equals(role)) {
+                if (request.patientEmail() == null || request.patientEmail().isEmpty()) {
+                    throw new AppException("Bitte wähle einen Patienten aus.");
+                }
+                patientEmailForBooking = request.patientEmail();
+            } else {
+                patientEmailForBooking = authentication.getName(); // Patient bucht für sich selbst
+            }
 
-            //Wenn alles erfolgreich war, senden wir die Termin-Bestätigung als JSON (HTTP 200) zurück
+            // Wir übergeben die richtige E-Mail an den Service!
+            AppointmentResponseDto response = appointmentService.createAppointment(request, patientEmailForBooking);
+
             return ResponseEntity.ok(response);
 
         } catch (AppException e) {
-
-            //senden wir die Fehlermeldung als Bad Requst (HTTP 400) an das Frontend
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         }
     }
 
