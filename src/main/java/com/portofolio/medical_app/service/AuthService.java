@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -25,8 +26,14 @@ public class AuthService {
     private final SecureRandom secureRandom = new SecureRandom();
     private final VerificationTokenMapper verificationTokenMapper;
 
+    private static final Set<String> ALLOWED_ROLES = Set.of("ROLE_PATIENT", "ROLE_DOCTOR");
+
     //Die Methode zur Registrierung
     public void register(RegisterRequestDto request) {
+
+        if (request.role() == null || !ALLOWED_ROLES.contains(request.role())) {
+            throw new AppException("Ungültige Rolle.");
+        }
 
         //1. Prüfen: Gibt es diese E-Mail schon in der Datenbank?
         if (appUserRepository.findByEmail(request.email()).isPresent()) {
