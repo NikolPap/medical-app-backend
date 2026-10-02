@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
-    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Appointment a WHERE a.doctor.id = :doctorId AND a.appointmentDate = :apptDate")
+    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Appointment a WHERE a.doctor.id = :doctorId AND a.appointmentDate = :apptDate AND a.status != 'CANCELLED'")
     boolean isDoctorBooked(@Param("doctorId") Long doctorId, @Param("apptDate") LocalDateTime apptDate);
 
     // Wir suchen alle Termine eines bestimmten Arztes an einem bestimmten Tag (von 00:00 bis 23:59 Uhr)
