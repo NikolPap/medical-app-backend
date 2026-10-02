@@ -113,13 +113,19 @@ public class AuthController {
 
     // POST: "Ist mein 6-stelliger Code richtig?" (Für Step 1)
     @PostMapping("/verify-reset-code")
-    public ResponseEntity<RegisterResponseDto> verifyResetCode(@RequestBody VerificationRequestDto request) {
+    public ResponseEntity<Object> verifyResetCode(@RequestBody java.util.Map<String, String> request) {
         try {
-            // Wir nutzen hier das DTO, das wir schon für die normale Verifizierung haben! (Hat email und code)
-            passwordResetService.verifyResetCode(request.email(), request.code());
+            String email = request.get("email");
+            String code = request.get("code");
+
+            if (email == null || code == null) {
+                throw new AppException("Email oder Code fehlt!");
+            }
+
+            passwordResetService.verifyResetCode(email, code);
             return ResponseEntity.ok(new RegisterResponseDto("Code ist korrekt!"));
         } catch (AppException e) {
-            return ResponseEntity.badRequest().body(new RegisterResponseDto(e.getMessage()));
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         }
     }
 
