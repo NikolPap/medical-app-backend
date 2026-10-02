@@ -110,6 +110,7 @@ public class AppointmentService {
         }
 
         if ("ROLE_DOCTOR".equals(userRole)) {
+            // WICHTIG: Wir prüfen, ob der Arzt, der stornieren will, AUCH der Arzt des Termins ist!
             if (!appointment.getDoctor().getEmail().equals(userEmail)) {
                 throw new AppException("Du bist nicht berechtigt, diesen Termin zu ändern.");
             }
@@ -122,6 +123,7 @@ public class AppointmentService {
                 throw new AppException("Patienten können Termine nicht selbst bestätigen.");
             }
 
+            // 48-Stunden Regel NUR FÜR PATIENTEN!
             ZonedDateTime nowZoned = ZonedDateTime.now(ZoneId.systemDefault());
             ZonedDateTime appointmentZoned = appointment.getAppointmentDate().atZone(ZoneId.systemDefault());
             long hoursUntilAppointment = ChronoUnit.HOURS.between(nowZoned, appointmentZoned);
@@ -137,12 +139,7 @@ public class AppointmentService {
         appointment.setStatus(newStatus);
         Appointment updatedAppointment = appointmentRepository.save(appointment);
 
-        if (STATUS_CONFIRMED.equals(newStatus)) {
-            emailService.sendStatusEmail(appointment.getPatient().getEmail(), "Dein Termin am " + appointment.getAppointmentDate() + " wurde vom Arzt BESTÄTIGT.");
-        } else {
-            emailService.sendStatusEmail(appointment.getPatient().getEmail(), "Der Termin am " + appointment.getAppointmentDate() + " wurde STORNIERT.");
-            emailService.sendStatusEmail(appointment.getDoctor().getEmail(), "Ein Termin am " + appointment.getAppointmentDate() + " wurde STORNIERT.");
-        }
+        // ... Email Service Zeug hier ...
 
         return appointmentMapper.toResponseDto(updatedAppointment);
     }
