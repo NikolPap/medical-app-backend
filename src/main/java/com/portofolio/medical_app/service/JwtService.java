@@ -1,75 +1,62 @@
 package com.portofolio.medical_app.service;
 
 import com.portofolio.medical_app.entity.AppUser;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings({"all"})
 @Service
 public class JwtService {
 
-    // Das ist unser geheimer Schlüssel! Wenn ein Hacker den nicht kennt,
-    // kann er keine falschen Tokens herstellen.
-    // WICHTIG: Muss mindestens 256-bit (32 Zeichen) lang sein!
     private static final String SECRET_KEY = "PortfolioMedicalAppSuperSecretKeyForJwtGenerationSpringSecurityVerificationToken";
 
-    // Diese Methode generiert den eigentlichen Token
     public String generateToken(AppUser user) {
-
-        // Extra-Daten (Claims), die wir im Token speichern wollen (z.B. die Rolle)
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("role", user.getRole());
 
         Instant now = Instant.now();
-        Instant expiration = now.plus(24, ChronoUnit.HOURS); // Läuft in 24 Stunden ab
+        Instant expiration = now.plus(24, ChronoUnit.HOURS);
 
         return Jwts.builder()
-                .setClaims(extraClaims)
-                .setSubject(user.getEmail())
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(expiration))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .claims(extraClaims) // Νέος τρόπος (JJWT 0.12)
+                .subject(user.getEmail())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiration))
+                .signWith(getSigningKey()) // Η νέα έκδοση διαλέγει αυτόματα τον πιο ασφαλή αλγόριθμο
                 .compact();
     }
 
-    // Hilfsmethode, um unseren String-Schlüssel in einen echten kryptografischen Key zu verwandeln
-    private Key getSigningKey() {
+    private SecretKey getSigningKey() {
         byte[] keyBytes = SECRET_KEY.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    //Extrahiert den Benutzernamen (E-Mail) aus dem Token
-    public  String extractUsername(String token) {
+    public String extractUsername(String token) {
         return extractAllClaims(token).getSubject();
     }
 
-    //Prüft, ob das Token für diesen speziellen Benutzer gültig ist und nicht abgelaufen ist
     public boolean isTokenValid(String token, AppUser user) {
         final String username = extractUsername(token);
         return (username.equals(user.getEmail())) && !isTokenExpired(token);
     }
 
-    //(Hilfsmethode) Entschlüsselt das Token mit unserem geheimen Schlüssel
     private boolean isTokenExpired(String token) {
-        return extractAllClaims(token).getExpiration().before(Date.from(java.time.Instant.now()));
+        return extractAllClaims(token).getExpiration().before(Date.from(Instant.now()));
     }
 
-    //Entschlüsselt das Token mit unserem geheimen Schlüssel
-    private io.jsonwebtoken.Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey()) // Νέος, πολύ πιο ασφαλής τρόπος (JJWT 0.12)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
-
 }
