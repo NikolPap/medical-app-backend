@@ -29,4 +29,7 @@ public class VerificationToken extends BaseEntity {
     @Column(nullable = false)
     private boolean used = false;
 
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private int failedAttempts = 0;
+
 }
