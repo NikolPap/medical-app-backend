@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+
 @Entity
 @Table(name = "password_reset_tokens")
 @Data
@@ -27,4 +28,7 @@ public class PasswordResetToken extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
+
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private int failedAttempts = 0;
 }
