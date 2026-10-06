@@ -3,6 +3,7 @@ package com.portofolio.medical_app.controller;
 import com.portofolio.medical_app.dto.*;
 import com.portofolio.medical_app.entity.AppUser;
 import com.portofolio.medical_app.exception.AppException;
+import com.portofolio.medical_app.repository.AppUserRepository;
 import com.portofolio.medical_app.service.AuthService;
 import com.portofolio.medical_app.service.LoginService;
 import com.portofolio.medical_app.service.PasswordResetService;
@@ -11,122 +12,83 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
+
     private final AuthService authService;
     private final VerificationService verificationService;
     private final LoginService loginService;
     private final PasswordResetService passwordResetService;
+    private final AppUserRepository appUserRepository;
 
-    private final com.portofolio.medical_app.repository.AppUserRepository appUserRepository;
-
-    //POST-Request zum Registrieren (URL: http://localhost:8080/api/auth/register)
     @PostMapping("/register")
     public ResponseEntity<RegisterResponseDto> register(@RequestBody RegisterRequestDto request) {
-        try {
-            //Wir rufen unseren Service auf , um die Logik auszuführen
-            authService.register(request);
-
-            RegisterResponseDto response = new RegisterResponseDto("Benutzer wurde erfolgreich registriert!");
-
-            //Wenn alles klappt, senden wir ein HTTP 200(OK) an das Frontend
-            return ResponseEntity.ok(response);
-
-        }   catch (AppException e) {
-            //Wenn die E-Mail schon existiert, senden wir ein HTTP 400(Bad  Request)
-            RegisterResponseDto errorResponse = new RegisterResponseDto(e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
-        }
+        authService.register(request);
+        return ResponseEntity.ok(new RegisterResponseDto("Benutzer wurde erfolgreich registriert!"));
     }
 
-    //Post-Requst zum Verifizieren(URL: http://localhost:8080/api/auth/verify)
     @PostMapping("/verify")
     public ResponseEntity<RegisterResponseDto> verify(@RequestBody VerificationRequestDto request) {
-        try {
-           verificationService.verifyAccount(request);
-
-           return ResponseEntity.ok(new RegisterResponseDto("Konto wurde erfolgreich veifiziert und entsperrt!"));
-
-        }catch (RuntimeException e) {
-            RegisterResponseDto errorResponse = new RegisterResponseDto(e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
-        }
+        verificationService.verifyAccount(request);
+        return ResponseEntity.ok(new RegisterResponseDto("Konto wurde erfolgreich verifiziert und entsperrt!"));
     }
 
-    //POST-Request zum Einloggen (URL: http://localhost:8080/api/auth/lögin)
     @PostMapping("/login")
-    public ResponseEntity<Object> login(@RequestBody LoginRequestDto request) {
-        try {
-            AuthResponseDto responseDto = loginService.login(request);
-
-            return ResponseEntity.ok(responseDto);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(401).body(new RegisterResponseDto(e.getMessage()));
-        }
+    public ResponseEntity<AuthResponseDto> login(@RequestBody LoginRequestDto request) {
+        return ResponseEntity.ok(loginService.login(request));
     }
 
-    // POST: "Ich habe mein Passwort vergessen!" (Schickt den Code per E-Mail)
+    // "Ich habe mein Passwort vergessen!" (schickt den Code per E-Mail)
     @PostMapping("/forgot-password")
     public ResponseEntity<RegisterResponseDto> forgotPassword(@RequestBody ForgotPasswordRequestDto request) {
-        try {
-            passwordResetService.requestPasswordReset(request);
-            return ResponseEntity.ok(new RegisterResponseDto("Falls die E-Mail existiert, wurde ein Code gesendet."));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new RegisterResponseDto(e.getMessage()));
-        }
+        passwordResetService.requestPasswordReset(request);
+        return ResponseEntity.ok(new RegisterResponseDto("Falls die E-Mail existiert, wurde ein Code gesendet."));
     }
 
-    // POST: "Hier ist mein Code und das neue Passwort!"
+    // "Hier ist mein Code und das neue Passwort!"
     @PostMapping("/reset-password")
     public ResponseEntity<RegisterResponseDto> resetPassword(@RequestBody ResetPasswordRequestDto request) {
-        try {
-            passwordResetService.resetPassword(request);
-            return ResponseEntity.ok(new RegisterResponseDto("Passwort wurde erfolgreich geändert. Konto ist entsperrt!"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new RegisterResponseDto(e.getMessage()));
-        }
+        passwordResetService.resetPassword(request);
+        return ResponseEntity.ok(new RegisterResponseDto("Passwort wurde erfolgreich geändert. Konto ist entsperrt!"));
     }
 
-    @GetMapping("/doctors")
-    public ResponseEntity<List<java.util.Map<String, Object>>> getAllDoctors() {
+    // "Ist mein 6-stelliger Code richtig?" (Schritt 1 im Frontend)
+    @PostMapping("/verify-reset-code")
+    public ResponseEntity<RegisterResponseDto> verifyResetCode(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String code = request.get("code");
 
+        if (email == null || code == null) {
+            throw new AppException("Email oder Code fehlt!");
+        }
+
+        passwordResetService.verifyResetCode(email, code);
+        return ResponseEntity.ok(new RegisterResponseDto("Code ist korrekt!"));
+    }
+
+
+    @GetMapping("/doctors")
+    public ResponseEntity<List<Map<String, Object>>> getAllDoctors() {
         List<AppUser> doctors = appUserRepository.findByRole("ROLE_DOCTOR");
 
-        List<java.util.Map<String, Object>> doctorList = doctors.stream().map(doc -> {
-            java.util.Map<String, Object> map = new java.util.HashMap<>();
+        List<Map<String, Object>> doctorList = doctors.stream().map(doc -> {
+            Map<String, Object> map = new HashMap<>();
             map.put("id", doc.getId());
             map.put("email", doc.getEmail());
-            map.put("firstName", doc.getFirstName()); // NEU
-            map.put("lastName", doc.getLastName());   // NEU
-            map.put("specialty", doc.getSpecialty()); // NEU
-            map.put("address", doc.getAddress());     // NEU
+            map.put("firstName", doc.getFirstName());
+            map.put("lastName", doc.getLastName());
+            map.put("specialty", doc.getSpecialty());
+            map.put("address", doc.getAddress());
             map.put("slotDuration", doc.getSlotDuration());
             return map;
         }).toList();
 
         return ResponseEntity.ok(doctorList);
     }
-
-    // POST: "Ist mein 6-stelliger Code richtig?" (Für Step 1)
-    @PostMapping("/verify-reset-code")
-    public ResponseEntity<Object> verifyResetCode(@RequestBody java.util.Map<String, String> request) {
-        try {
-            String email = request.get("email");
-            String code = request.get("code");
-
-            if (email == null || code == null) {
-                throw new AppException("Email oder Code fehlt!");
-            }
-
-            passwordResetService.verifyResetCode(email, code);
-            return ResponseEntity.ok(new RegisterResponseDto("Code ist korrekt!"));
-        } catch (AppException e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
-        }
-    }
-
 }
