@@ -65,4 +65,16 @@ public class DoctorScheduleService {
 
         doctorScheduleRepository.delete(schedule);
     }
+
+    public void updateSlotDuration(int minutes, String doctorEmail) {
+        if (minutes < 5 || minutes > 120) {
+            throw new AppException("Die Termin-Dauer muss zwischen 5 und 120 Minuten liegen.");
+        }
+
+        AppUser doctor = appUserRepository.findByEmail(doctorEmail)
+                .orElseThrow(() -> new AppException("Arzt nicht gefunden."));
+
+        doctor.setSlotDuration(minutes);
+        appUserRepository.save(doctor);
+    }
 }
