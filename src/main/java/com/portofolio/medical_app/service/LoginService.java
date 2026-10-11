@@ -1,5 +1,6 @@
 package com.portofolio.medical_app.service;
 
+import com.portofolio.medical_app.config.Roles;
 import com.portofolio.medical_app.dto.AuthResponseDto;
 import com.portofolio.medical_app.dto.LoginRequestDto;
 import com.portofolio.medical_app.entity.AppUser;
@@ -51,6 +52,17 @@ public class LoginService {
 
         // 4. Passwort richtig -> Fehlversuche zurücksetzen
         resetFailedAttempts(user);
+
+        if (Roles.PENDING_DOCTOR.equals(user.getRole())) {
+            throw new AppException(
+                    "Dein Arztkonto wird noch geprüft. Du erhältst eine E-Mail, sobald es freigeschaltet ist.",
+                    HttpStatus.FORBIDDEN);
+        }
+        if (Roles.REJECTED_DOCTOR.equals(user.getRole())) {
+            throw new AppException(
+                    "Dein Arztkonto wurde leider abgelehnt. Bitte kontaktiere den Support.",
+                    HttpStatus.FORBIDDEN);
+        }
 
         // 5. Token generieren und zurückgeben
         return new AuthResponseDto(jwtService.generateToken(user), user.getRole());
