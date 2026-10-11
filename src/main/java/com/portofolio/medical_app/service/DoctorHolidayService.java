@@ -1,8 +1,10 @@
 package com.portofolio.medical_app.service;
 
+import com.portofolio.medical_app.dto.DoctorHolidayResponseDto;
 import com.portofolio.medical_app.entity.AppUser;
 import com.portofolio.medical_app.entity.DoctorHoliday;
 import com.portofolio.medical_app.exception.AppException;
+import com.portofolio.medical_app.mapper.DoctorMapper;
 import com.portofolio.medical_app.repository.AppUserRepository;
 import com.portofolio.medical_app.repository.DoctorHolidayRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ public class DoctorHolidayService {
 
     private final DoctorHolidayRepository doctorHolidayRepository;
     private final AppUserRepository appUserRepository;
+    private final DoctorMapper doctorMapper;
 
     // NEU: Speichert eine ganze Range (z.B. 1. Juli bis 15. Juli)
     public void addHolidayRange(String doctorEmail, LocalDate startDate, LocalDate endDate) {
@@ -41,10 +44,13 @@ public class DoctorHolidayService {
         }
     }
 
-    public List<DoctorHoliday> getMyHolidays(String doctorEmail) {
+    public List<DoctorHolidayResponseDto> getMyHolidays(String doctorEmail) {
         AppUser doctor = appUserRepository.findByEmail(doctorEmail)
                 .orElseThrow(() -> new AppException("Arzt nicht gefunden."));
-        return doctorHolidayRepository.findByDoctorIdOrderByHolidayDateAsc(doctor.getId());
+        return doctorHolidayRepository.findByDoctorIdOrderByHolidayDateAsc(doctor.getId())
+                .stream()
+                .map(doctorMapper::toDto)
+                .toList();
     }
 
     public void deleteHoliday(Long holidayId, String doctorEmail) {
