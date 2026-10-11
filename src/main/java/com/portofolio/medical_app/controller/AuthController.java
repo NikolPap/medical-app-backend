@@ -4,10 +4,7 @@ import com.portofolio.medical_app.dto.*;
 import com.portofolio.medical_app.entity.AppUser;
 import com.portofolio.medical_app.exception.AppException;
 import com.portofolio.medical_app.repository.AppUserRepository;
-import com.portofolio.medical_app.service.AuthService;
-import com.portofolio.medical_app.service.LoginService;
-import com.portofolio.medical_app.service.PasswordResetService;
-import com.portofolio.medical_app.service.VerificationService;
+import com.portofolio.medical_app.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +22,7 @@ public class AuthController {
     private final VerificationService verificationService;
     private final LoginService loginService;
     private final PasswordResetService passwordResetService;
+    private final DoctorService doctorService;
     private final AppUserRepository appUserRepository;
 
     @PostMapping("/register")
@@ -74,21 +72,7 @@ public class AuthController {
 
 
     @GetMapping("/doctors")
-    public ResponseEntity<List<Map<String, Object>>> getAllDoctors() {
-        List<AppUser> doctors = appUserRepository.findByRole("ROLE_DOCTOR");
-
-        List<Map<String, Object>> doctorList = doctors.stream().map(doc -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", doc.getId());
-            map.put("email", doc.getEmail());
-            map.put("firstName", doc.getFirstName());
-            map.put("lastName", doc.getLastName());
-            map.put("specialty", doc.getSpecialty());
-            map.put("address", doc.getAddress());
-            map.put("slotDuration", doc.getSlotDuration());
-            return map;
-        }).toList();
-
-        return ResponseEntity.ok(doctorList);
+    public ResponseEntity<List<DoctorResponseDto>> getAllDoctors() {
+        return ResponseEntity.ok(doctorService.getAllDoctors());
     }
 }
