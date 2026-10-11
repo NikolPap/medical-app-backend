@@ -1,7 +1,7 @@
 package com.portofolio.medical_app.controller;
 
+import com.portofolio.medical_app.dto.DoctorHolidayResponseDto;
 import com.portofolio.medical_app.dto.RegisterResponseDto;
-import com.portofolio.medical_app.entity.DoctorHoliday;
 import com.portofolio.medical_app.service.DoctorHolidayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,7 @@ public class DoctorHolidayController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<List<DoctorHoliday>> getMyHolidays(Authentication authentication) {
+    public ResponseEntity<List<DoctorHolidayResponseDto>> getMyHolidays(Authentication authentication) {
         return ResponseEntity.ok(doctorHolidayService.getMyHolidays(authentication.getName()));
     }
 
