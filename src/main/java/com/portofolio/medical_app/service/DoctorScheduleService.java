@@ -1,9 +1,11 @@
 package com.portofolio.medical_app.service;
 
+import com.portofolio.medical_app.dto.DoctorScheduleResponseDto;
 import com.portofolio.medical_app.dto.ScheduleRequestDto;
 import com.portofolio.medical_app.entity.AppUser;
 import com.portofolio.medical_app.entity.DoctorSchedule;
 import com.portofolio.medical_app.exception.AppException;
+import com.portofolio.medical_app.mapper.DoctorMapper;
 import com.portofolio.medical_app.repository.AppUserRepository;
 import com.portofolio.medical_app.repository.DoctorScheduleRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +21,9 @@ public class DoctorScheduleService {
 
     private final DoctorScheduleRepository doctorScheduleRepository;
     private final AppUserRepository appUserRepository;
+    private final DoctorMapper doctorMapper;
 
     // Speichert oder aktualisiert den Arbeitsplan für einen Tag
-    // Speichert EINE NEUE Arbeitszeit (Schicht) für einen Tag
     public void saveSchedule(ScheduleRequestDto request, String doctorEmail) {
 
         AppUser doctor = appUserRepository.findByEmail(doctorEmail)
@@ -45,11 +47,13 @@ public class DoctorScheduleService {
     }
 
     // Holt den kompletten Wochenplan für das Dashboard des Arztes
-    public List<DoctorSchedule> getMySchedule(String doctorEmail) {
+    public List<DoctorScheduleResponseDto> getMySchedule(String doctorEmail) {
         AppUser doctor = appUserRepository.findByEmail(doctorEmail)
                 .orElseThrow(() -> new AppException("Arzt nicht gefunden."));
-
-        return doctorScheduleRepository.findByDoctorId(doctor.getId());
+        return doctorScheduleRepository.findByDoctorId(doctor.getId())
+                .stream()
+                .map(doctorMapper::toDto)
+                .toList();
     }
 
     // Löscht eine bestimmte Arbeitszeit
