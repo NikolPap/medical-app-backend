@@ -1,5 +1,6 @@
 package com.portofolio.medical_app.service;
 
+import com.portofolio.medical_app.config.Roles;
 import com.portofolio.medical_app.dto.RegisterRequestDto;
 import com.portofolio.medical_app.entity.AppUser;
 import com.portofolio.medical_app.entity.VerificationToken;
@@ -43,6 +44,9 @@ public class AuthService {
         //2. Das Passwort verschlüsseln
         String encodedPassword = passwordEncoder.encode(request.password());
         AppUser newUser = appUserMapper.toEntity(request, encodedPassword);
+        if (Roles.DOCTOR.equals(request.role())) {
+            newUser.setRole(Roles.PENDING_DOCTOR);
+        }
         AppUser savedUser = appUserRepository.save(newUser);
 
         //Code generieren und verschlüsseln
