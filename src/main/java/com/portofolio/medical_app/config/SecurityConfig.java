@@ -56,7 +56,7 @@ public class SecurityConfig {
                             // Diese URLs dürfen von JEDEM aufgerufen werden (z.B. Registrierung / Login / Freie Slots)
                             .requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers("/api/appointments/available-slots").permitAll()
-                            // Für ALLE anderen URLs muss man eingeloggt sein!
+                            .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                             .anyRequest().authenticated()
                     )
                     // Unseren JWT Filter an die Tür stellen!
