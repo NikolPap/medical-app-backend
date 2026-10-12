@@ -1,5 +1,6 @@
 package com.portofolio.medical_app.service;
 
+import com.portofolio.medical_app.config.Messages;
 import com.portofolio.medical_app.dto.DoctorScheduleResponseDto;
 import com.portofolio.medical_app.dto.ScheduleRequestDto;
 import com.portofolio.medical_app.entity.AppUser;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,13 +27,27 @@ public class DoctorScheduleService {
     public void saveSchedule(ScheduleRequestDto request, String doctorEmail) {
 
         AppUser doctor = appUserRepository.findByEmail(doctorEmail)
-                .orElseThrow(() -> new AppException("Arzt nicht gefunden."));
+                .orElseThrow(() -> new AppException(Messages.DOCTOR_NOT_FOUND));
 
-        DayOfWeek day = DayOfWeek.valueOf(request.dayOfWeek().toUpperCase());
+        final DayOfWeek day;
+        try {
+            day = DayOfWeek.valueOf(request.dayOfWeek().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new AppException("Ungültiger Wochentag.");
+        }
 
         // Logik-Check: Feierabend darf nicht vor Arbeitsbeginn sein!
-        if (request.endTime().isBefore(request.startTime())) {
+        if (!request.endTime().isAfter(request.startTime())) {
             throw new AppException("Die Endzeit darf nicht vor der Startzeit liegen.");
+        }
+
+        boolean overlaps = doctorScheduleRepository.findByDoctorId(doctor.getId()).stream()
+                .filter(s -> day.equals(s.getDayOfWeek()))
+                .anyMatch(s -> request.startTime().isBefore(s.getEndTime())
+                        && request.endTime().isAfter(s.getStartTime()));
+
+        if (overlaps) {
+            throw new AppException("Diese Zeit überschneidet sich mit einer bestehenden Arbeitszeit.");
         }
 
         // Wir erstellen IMMER einen neuen Eintrag (Damit mehrere Schichten pro Tag möglich sind!)
@@ -49,7 +63,7 @@ public class DoctorScheduleService {
     // Holt den kompletten Wochenplan für das Dashboard des Arztes
     public List<DoctorScheduleResponseDto> getMySchedule(String doctorEmail) {
         AppUser doctor = appUserRepository.findByEmail(doctorEmail)
-                .orElseThrow(() -> new AppException("Arzt nicht gefunden."));
+                .orElseThrow(() -> new AppException(Messages.DOCTOR_NOT_FOUND));
         return doctorScheduleRepository.findByDoctorId(doctor.getId())
                 .stream()
                 .map(doctorMapper::toDto)
@@ -76,7 +90,7 @@ public class DoctorScheduleService {
         }
 
         AppUser doctor = appUserRepository.findByEmail(doctorEmail)
-                .orElseThrow(() -> new AppException("Arzt nicht gefunden."));
+                .orElseThrow(() -> new AppException(Messages.DOCTOR_NOT_FOUND));
 
         doctor.setSlotDuration(minutes);
         appUserRepository.save(doctor);
