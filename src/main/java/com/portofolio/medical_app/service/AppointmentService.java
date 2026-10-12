@@ -1,5 +1,6 @@
 package com.portofolio.medical_app.service;
 
+import com.portofolio.medical_app.config.Messages;
 import com.portofolio.medical_app.dto.AppointmentRequestDto;
 import com.portofolio.medical_app.dto.AppointmentResponseDto;
 import com.portofolio.medical_app.entity.AppUser;
@@ -9,6 +10,7 @@ import com.portofolio.medical_app.mapper.AppointmentMapper;
 import com.portofolio.medical_app.repository.AppUserRepository;
 import com.portofolio.medical_app.repository.AppointmentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 
@@ -26,7 +29,6 @@ public class AppointmentService {
     private static final String STATUS_CONFIRMED = "CONFIRMED";
     private static final String STATUS_CANCELLED = "CANCELLED";
     private static final String STATUS_PENDING = "PENDING";
-    private static final String MSG_DOCTOR_NOT_FOUND = "Arzt nicht gefunden.";
 
     private final AppointmentRepository appointmentRepository;
     private final AppUserRepository appUserRepository;
@@ -52,7 +54,7 @@ public class AppointmentService {
                 .orElseThrow(() -> new AppException("Patient nicht gefunden."));
 
         AppUser doctor = appUserRepository.findById(request.doctorId())
-                .orElseThrow(() -> new AppException(MSG_DOCTOR_NOT_FOUND));
+                .orElseThrow(() -> new AppException(Messages.DOCTOR_NOT_FOUND));
 
         if (appointmentRepository.isDoctorBooked(doctor.getId(), fullAppointmentDateTime)) {
             throw new AppException("Dieser Termin ist beim ausgewählten Arzt bereits belegt.");
@@ -123,7 +125,7 @@ public class AppointmentService {
                 throw new AppException("Patienten können Termine nicht selbst bestätigen.");
             }
 
-            // 48-Stunden Regel NUR FÜR PATIENTEN!
+            // 48-Stunden-Regel NUR FÜR PATIENTEN!
             ZonedDateTime nowZoned = ZonedDateTime.now(ZoneId.systemDefault());
             ZonedDateTime appointmentZoned = appointment.getAppointmentDate().atZone(ZoneId.systemDefault());
             long hoursUntilAppointment = ChronoUnit.HOURS.between(nowZoned, appointmentZoned);
@@ -139,7 +141,11 @@ public class AppointmentService {
         appointment.setStatus(newStatus);
         Appointment updatedAppointment = appointmentRepository.save(appointment);
 
-        // ... Email Service Zeug hier ...
+        emailService.sendStatusEmail(
+                updatedAppointment.getPatient().getEmail(),
+                "Dein Termin am " + updatedAppointment.getAppointmentDate()
+                        .format(DateTimeFormatter.ofPattern("dd.MM.yyyy 'um' HH:mm"))
+                        + " Uhr hat jetzt den Status: " + newStatus);
 
         return appointmentMapper.toResponseDto(updatedAppointment);
     }
@@ -148,7 +154,7 @@ public class AppointmentService {
     public java.util.List<String> getAvailableTimeSlots(Long doctorId, java.time.LocalDate date) {
 
         AppUser doctor = appUserRepository.findById(doctorId)
-                .orElseThrow(() -> new AppException(MSG_DOCTOR_NOT_FOUND));
+                .orElseThrow(() -> new AppException(Messages.DOCTOR_NOT_FOUND));
 
         int slotDurationMinutes = doctor.getSlotDuration();
         java.time.DayOfWeek dayOfWeek = date.getDayOfWeek();
@@ -162,7 +168,7 @@ public class AppointmentService {
 
         // SonarQube Fix: Aufruf der neuen Hilfsmethode macht den Code extrem lesbar!
         if (doctorHolidayRepository.existsByDoctorIdAndHolidayDate(doctorId, date)) {
-            return new ArrayList<>(); // Arzt hat Urlaub -> Keine freien Slots!
+            return new ArrayList<>(); // Arzt hat Urlaub → Keine freien Slots!
         }
 
         java.util.List<LocalDateTime> bookedSlots = getBookedTimeSlots(doctorId, date);
@@ -190,6 +196,19 @@ public class AppointmentService {
         }
 
         return availableSlots.stream().sorted().toList();
+    }
+
+    public void verifyDoctorMayBookFor(String doctorEmail, Long requestedDoctorId, String patientEmail) {
+        AppUser doctor = appUserRepository.findByEmail(doctorEmail)
+                .orElseThrow(() -> new AppException(Messages.DOCTOR_NOT_FOUND));
+
+        if (!doctor.getId().equals(requestedDoctorId)) {
+            throw new AppException("Du kannst Termine nur in deinem eigenen Kalender anlegen.", HttpStatus.FORBIDDEN);
+        }
+
+        if (!appointmentRepository.existsByDoctor_EmailAndPatient_Email(doctorEmail, patientEmail)) {
+            throw new AppException("Für diesen Patienten kannst du keinen Termin anlegen.", HttpStatus.FORBIDDEN);
+        }
     }
 
 }
