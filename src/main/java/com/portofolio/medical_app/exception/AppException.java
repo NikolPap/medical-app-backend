@@ -1,7 +1,9 @@
 package com.portofolio.medical_app.exception;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+@Getter
 public class AppException extends RuntimeException {
 
     private final HttpStatus status;
@@ -22,7 +24,4 @@ public class AppException extends RuntimeException {
         this.status = HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
-    public HttpStatus getStatus() {
-        return status;
-    }
 }
