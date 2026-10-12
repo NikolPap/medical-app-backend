@@ -27,4 +27,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     // Hole alle Termine eines bestimmten Arztes (Sortiert nach Datum absteigend)
     java.util.List<Appointment> findByDoctor_EmailOrderByAppointmentDateDesc(String doctorEmail);
+
+    boolean existsByDoctor_EmailAndPatient_Email(String doctorEmail, String patientEmail);
 }
