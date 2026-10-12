@@ -6,13 +6,12 @@ import org.springframework.stereotype.Repository;
 
 import java.time.DayOfWeek;
 import java.util.List;
-import java.util.Optional;
+
 
 @Repository
 public interface DoctorScheduleRepository extends JpaRepository<DoctorSchedule, Long> {
 
     // Holt den Arbeitsplan eines Arztes für einen bestimmten Wochentag
-    Optional<DoctorSchedule> findByDoctorIdAndDayOfWeek(Long doctorId, DayOfWeek dayOfWeek);
 
     // Holt den kompletten Wochenplan eines Arztes (Für sein Dashboard)
     List<DoctorSchedule> findByDoctorId(Long doctorId);
