@@ -45,11 +45,11 @@ public class AppUser extends BaseEntity implements UserDetails {
     @Column
     private String phoneNumber;
 
-    // NEU: Geschlecht (MALE, FEMALE, DIVERS) - Nur für Patienten
+    // NEU: Geschlecht (MALE, FEMALE, DIVERS) - nur für Patienten
     @Column
     private String gender;
 
-    // NEU: Versicherungsart (PRIVATE, GESETZLICH) - Nur für Patienten
+    // NEU: Versicherungsart (PRIVATE, GESETZLICH) - nur für Patienten
     @Column
     private String insuranceType;
 
