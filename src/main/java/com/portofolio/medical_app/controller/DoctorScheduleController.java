@@ -4,6 +4,7 @@ import com.portofolio.medical_app.dto.DoctorScheduleResponseDto;
 import com.portofolio.medical_app.dto.RegisterResponseDto;
 import com.portofolio.medical_app.dto.ScheduleRequestDto;
 import com.portofolio.medical_app.service.DoctorScheduleService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,7 +23,7 @@ public class DoctorScheduleController {
 
     @PostMapping
     public ResponseEntity<RegisterResponseDto> saveSchedule(
-            @RequestBody ScheduleRequestDto request,
+            @Valid @RequestBody ScheduleRequestDto request,
             Authentication authentication) {
         doctorScheduleService.saveSchedule(request, authentication.getName());
         return ResponseEntity.ok(new RegisterResponseDto("Arbeitszeit erfolgreich gespeichert."));
