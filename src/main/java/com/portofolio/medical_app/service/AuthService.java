@@ -36,6 +36,8 @@ public class AuthService {
             throw new AppException("Ungültige Rolle.");
         }
 
+        validateRoleSpecificFields(request);
+
         //1. Prüfen: Gibt es diese E-Mail schon in der Datenbank?
         if (appUserRepository.findByEmail(request.email()).isPresent()) {
             throw new AppException("Diese Email existiert bereits!"); //Bricht den Vorgang mit Fehler ab
@@ -50,15 +52,29 @@ public class AuthService {
         AppUser savedUser = appUserRepository.save(newUser);
 
         //Code generieren und verschlüsseln
-        String randomCode = String.format("%06d", secureRandom.nextInt(999999));
+        String randomCode = String.format("%06d", secureRandom.nextInt(1_000_000));
         String hashedCode = passwordEncoder.encode(randomCode);
 
-       // Mapping nutzen
+        // Mapping nutzen
         VerificationToken tokenEntity = verificationTokenMapper.toEntity(hashedCode, savedUser);
         verificationTokenRepository.save(tokenEntity);
 
         //Den UNVERSCHLÜSSELTEN Code an den User schicken
         emailService.sendVerificationEmail(savedUser.getEmail(), randomCode);
+    }
+
+    private void validateRoleSpecificFields(RegisterRequestDto request) {
+        if (Roles.DOCTOR.equals(request.role())) {
+            if (isBlank(request.specialty()) || isBlank(request.address())) {
+                throw new AppException("Fachrichtung und Praxis-Adresse sind für Ärzte Pflicht.");
+            }
+        } else if (isBlank(request.gender()) || isBlank(request.insuranceType())) {
+            throw new AppException("Geschlecht und Versicherungsart sind für Patienten Pflicht.");
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
 }
