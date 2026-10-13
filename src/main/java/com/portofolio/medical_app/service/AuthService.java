@@ -12,6 +12,7 @@ import com.portofolio.medical_app.repository.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.Set;
@@ -30,6 +31,7 @@ public class AuthService {
     private static final Set<String> ALLOWED_ROLES = Set.of("ROLE_PATIENT", "ROLE_DOCTOR");
 
     //Die Methode zur Registrierung
+    @Transactional
     public void register(RegisterRequestDto request) {
 
         if (request.role() == null || !ALLOWED_ROLES.contains(request.role())) {
