@@ -27,7 +27,7 @@ public class AppointmentMapper {
                 appointment.getPatient().getInsuranceType(),
 
                 appointment.getAppointmentDate(),
-                appointment.getStatus()
+                appointment.getStatus().name()
         );
     }
 }
