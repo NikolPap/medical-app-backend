@@ -3,6 +3,7 @@ package com.portofolio.medical_app.controller;
 import com.portofolio.medical_app.config.Roles;
 import com.portofolio.medical_app.dto.AppointmentRequestDto;
 import com.portofolio.medical_app.dto.AppointmentResponseDto;
+import com.portofolio.medical_app.entity.AppointmentStatus;
 import com.portofolio.medical_app.exception.AppException;
 import com.portofolio.medical_app.service.AppointmentService;
 import jakarta.validation.Valid;
@@ -74,7 +75,7 @@ public class AppointmentController {
     @PreAuthorize("hasAnyAuthority('ROLE_PATIENT', 'ROLE_DOCTOR')")
     public ResponseEntity<AppointmentResponseDto> updateStatus(
             @PathVariable Long id,
-            @RequestParam String status,
+            @RequestParam AppointmentStatus status,
             Authentication authentication) {
 
         String userRole = isDoctor(authentication) ? Roles.DOCTOR : Roles.PATIENT;
