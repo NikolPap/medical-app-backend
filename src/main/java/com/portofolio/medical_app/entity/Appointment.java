@@ -21,8 +21,9 @@ public class Appointment {
     @Column(nullable = false)
     private LocalDateTime appointmentDate; //Datum und Uhrzeit des Termins
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status; //z.B. "PENDING" (Ausstehend), "CONFIRMED",(Bestätigt), "CANCELLED"(Storniert)
+    private AppointmentStatus status = AppointmentStatus.PENDING;
 
     // ===================================
     // BEZIEHUNGEN ZU ANDEREN TABELLEN (Foreign Keys)
