@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 @Component
 @RequiredArgsConstructor
@@ -19,15 +19,16 @@ public class TokenCleanupJob {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenCleanupJob.class);
 
     private final VerificationTokenRepository verificationTokenRepository;
+    private final Clock clock;
 
     /**
-     *  Laüft jeden Tag um genau 00:00 (Mitternacht)
+     *  Läuft jeden Tag um genau 00:00 (Mitternacht)
      */
     @Scheduled(cron = "0 0 0 * * ?")
     public void cleanupTokens() {
         LOGGER.info("Starte nächtlichen Cleanup-Job für abgelaufene Tokens...");
 
-        verificationTokenRepository.deleteExpiredTokens(LocalDateTime.now(ZoneId.systemDefault()));
+        verificationTokenRepository.deleteExpiredTokens(LocalDateTime.now(clock));
 
         LOGGER.info("✨ Cleanup-Job erfolgreich beendet.");
     }
