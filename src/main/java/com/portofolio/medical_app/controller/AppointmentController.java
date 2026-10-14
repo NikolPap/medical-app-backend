@@ -3,6 +3,7 @@ package com.portofolio.medical_app.controller;
 import com.portofolio.medical_app.config.Roles;
 import com.portofolio.medical_app.dto.AppointmentRequestDto;
 import com.portofolio.medical_app.dto.AppointmentResponseDto;
+import com.portofolio.medical_app.dto.RescheduleRequestDto;
 import com.portofolio.medical_app.entity.AppointmentStatus;
 import com.portofolio.medical_app.exception.AppException;
 import com.portofolio.medical_app.service.AppointmentService;
@@ -95,5 +96,18 @@ public class AppointmentController {
     private boolean isDoctor(Authentication authentication) {
         return authentication.getAuthorities().stream()
                 .anyMatch(authority -> Roles.DOCTOR.equals(authority.getAuthority()));
+    }
+
+    @PutMapping("/{id}/reschedule")
+    @PreAuthorize("hasAnyAuthority('ROLE_PATIENT', 'ROLE_DOCTOR')")
+    public ResponseEntity<AppointmentResponseDto> reschedule(
+            @PathVariable Long id,
+            @Valid @RequestBody RescheduleRequestDto request,
+            Authentication authentication) {
+
+        String userRole = isDoctor(authentication) ? Roles.DOCTOR : Roles.PATIENT;
+
+        return ResponseEntity.ok(
+                appointmentService.rescheduleAppointment(id, request, authentication.getName(), userRole));
     }
 }
