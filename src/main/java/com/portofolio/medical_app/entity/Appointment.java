@@ -25,6 +25,9 @@ public class Appointment {
     @Column(nullable = false)
     private AppointmentStatus status = AppointmentStatus.PENDING;
 
+    @Column(nullable = false, columnDefinition = "integer default 30")
+    private int durationMinutes = 30;
+
     // ===================================
     // BEZIEHUNGEN ZU ANDEREN TABELLEN (Foreign Keys)
     // ===================================
