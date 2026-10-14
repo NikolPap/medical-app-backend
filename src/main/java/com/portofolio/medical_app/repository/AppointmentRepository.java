@@ -28,4 +28,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     java.util.List<Appointment> findByDoctor_EmailOrderByAppointmentDateDesc(String doctorEmail);
 
     boolean existsByDoctor_EmailAndPatient_Email(String doctorEmail, String patientEmail);
+
+    // Zählt aktive Termine in einem bestimmten Zeitraum (wichtig für die Urlaubs-Validierung)
+    @Query("SELECT COUNT(a) FROM Appointment a WHERE a.doctor.id = :doctorId "
+            + "AND a.appointmentDate >= :from AND a.appointmentDate < :to "
+            + "AND a.status <> com.portofolio.medical_app.entity.AppointmentStatus.CANCELLED")
+    long countActiveInRange(@Param("doctorId") Long doctorId,
+                            @Param("from") LocalDateTime from,
+                            @Param("to") LocalDateTime to);
 }
