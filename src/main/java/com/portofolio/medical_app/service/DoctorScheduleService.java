@@ -9,7 +9,9 @@ import com.portofolio.medical_app.exception.AppException;
 import com.portofolio.medical_app.mapper.DoctorMapper;
 import com.portofolio.medical_app.repository.AppUserRepository;
 import com.portofolio.medical_app.repository.DoctorScheduleRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
@@ -24,24 +26,58 @@ public class DoctorScheduleService {
     private final DoctorMapper doctorMapper;
 
     // Speichert oder aktualisiert den Arbeitsplan für einen Tag
+    @Transactional
     public void saveSchedule(ScheduleRequestDto request, String doctorEmail) {
+        AppUser doctor = findDoctor(doctorEmail);
+        DayOfWeek day = parseDay(request.dayOfWeek());
+        validateShift(doctor, day, request, null);
 
-        AppUser doctor = appUserRepository.findByEmail(doctorEmail)
+        DoctorSchedule schedule = new DoctorSchedule();
+        schedule.setDoctor(doctor);
+        schedule.setDayOfWeek(day);
+        schedule.setStartTime(request.startTime());
+        schedule.setEndTime(request.endTime());
+        doctorScheduleRepository.save(schedule);
+    }
+
+    @Transactional
+    public void updateSchedule(Long scheduleId, ScheduleRequestDto request, String doctorEmail) {
+        DoctorSchedule schedule = doctorScheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new AppException("Arbeitszeit nicht gefunden.", HttpStatus.NOT_FOUND));
+
+        if (!schedule.getDoctor().getEmail().equals(doctorEmail)) {
+            throw new AppException("Du darfst nur deine eigenen Arbeitszeiten ändern.", HttpStatus.FORBIDDEN);
+        }
+
+        DayOfWeek day = parseDay(request.dayOfWeek());
+        validateShift(schedule.getDoctor(), day, request, scheduleId);
+
+        schedule.setDayOfWeek(day);
+        schedule.setStartTime(request.startTime());
+        schedule.setEndTime(request.endTime());
+        doctorScheduleRepository.save(schedule);
+    }
+
+    private AppUser findDoctor(String email) {
+        return appUserRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(Messages.DOCTOR_NOT_FOUND));
+    }
 
-        final DayOfWeek day;
+    private DayOfWeek parseDay(String value) {
         try {
-            day = DayOfWeek.valueOf(request.dayOfWeek().toUpperCase());
+            return DayOfWeek.valueOf(value.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new AppException("Ungültiger Wochentag.");
         }
+    }
 
-        // Logik-Check: Feierabend darf nicht vor Arbeitsbeginn sein!
+    private void validateShift(AppUser doctor, DayOfWeek day, ScheduleRequestDto request, Long excludeId) {
         if (!request.endTime().isAfter(request.startTime())) {
-            throw new AppException("Die Endzeit darf nicht vor der Startzeit liegen.");
+            throw new AppException("Die Endzeit muss nach der Startzeit liegen.");
         }
 
         boolean overlaps = doctorScheduleRepository.findByDoctorId(doctor.getId()).stream()
+                .filter(s -> !s.getId().equals(excludeId))
                 .filter(s -> day.equals(s.getDayOfWeek()))
                 .anyMatch(s -> request.startTime().isBefore(s.getEndTime())
                         && request.endTime().isAfter(s.getStartTime()));
@@ -49,15 +85,6 @@ public class DoctorScheduleService {
         if (overlaps) {
             throw new AppException("Diese Zeit überschneidet sich mit einer bestehenden Arbeitszeit.");
         }
-
-        // Wir erstellen IMMER einen neuen Eintrag (Damit mehrere Schichten pro Tag möglich sind!)
-        DoctorSchedule newSchedule = new DoctorSchedule();
-        newSchedule.setDoctor(doctor);
-        newSchedule.setDayOfWeek(day);
-        newSchedule.setStartTime(request.startTime());
-        newSchedule.setEndTime(request.endTime());
-
-        doctorScheduleRepository.save(newSchedule);
     }
 
     // Holt den kompletten Wochenplan für das Dashboard des Arztes
