@@ -50,4 +50,13 @@ public class DoctorScheduleController {
         doctorScheduleService.updateSlotDuration(minutes, authentication.getName());
         return ResponseEntity.ok(new RegisterResponseDto("Termin-Dauer erfolgreich auf " + minutes + " Minuten geändert."));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<RegisterResponseDto> updateSchedule(
+            @PathVariable Long id,
+            @Valid @RequestBody ScheduleRequestDto request,
+            Authentication authentication) {
+        doctorScheduleService.updateSchedule(id, request, authentication.getName());
+        return ResponseEntity.ok(new RegisterResponseDto("Arbeitszeit erfolgreich aktualisiert."));
+    }
 }
