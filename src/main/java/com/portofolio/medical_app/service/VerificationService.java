@@ -24,7 +24,6 @@ public class VerificationService {
     private final VerificationTokenRepository verificationTokenRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // Προσθέσαμε το Clock εδώ
     private final Clock clock;
 
     // noRollbackFor: Der Fehlversuch-Zähler muss gespeichert werden, obwohl wir danach eine Exception werfen
@@ -40,7 +39,6 @@ public class VerificationService {
         VerificationToken verificationToken = verificationTokenRepository.findByUser_EmailAndUsedFalse(user.getEmail())
                 .orElseThrow(() -> new AppException("Kein gültiger Bestätigungscode gefunden."));
 
-        // Και το χρησιμοποιούμε εδώ: LocalDateTime.now(clock)
         if (verificationToken.getExpiresAt().isBefore(LocalDateTime.now(clock))) {
             throw new AppException("Der Bestätigungscode ist abgelaufen.");
         }
