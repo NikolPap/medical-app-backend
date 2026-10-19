@@ -9,12 +9,14 @@ import com.portofolio.medical_app.repository.AppUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class AdminService {
 
     private final AppUserRepository appUserRepository;
@@ -29,6 +31,7 @@ public class AdminService {
     }
 
     @Transactional
+    @PreAuthorize("isFullyAuthenticated() && hasAuthority('ROLE_ADMIN')")
     public void approveDoctor(Long userId) {
         AppUser doctor = findPendingDoctor(userId);
         doctor.setRole(Roles.DOCTOR);
