@@ -34,4 +34,5 @@ public class AdminController {
         adminService.rejectDoctor(id);
         return ResponseEntity.ok(new RegisterResponseDto("Arzt wurde abgelehnt."));
     }
+
 }
