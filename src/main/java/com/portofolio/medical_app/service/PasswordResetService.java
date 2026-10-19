@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.Clock;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,8 +29,6 @@ public class PasswordResetService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final PasswordResetTokenMapper passwordResetTokenMapper;
-
-    // ΕΔΩ ΜΠΗΚΕ ΤΟ CLOCK, ΜΕΣΑ ΣΤΗΝ ΚΛΑΣΗ!
     private final Clock clock;
 
     private final SecureRandom secureRandom = new SecureRandom();
@@ -37,12 +36,13 @@ public class PasswordResetService {
     @Transactional
     public void requestPasswordReset(ForgotPasswordRequestDto request) {
 
-        AppUser user = appUserRepository.findByEmail(request.email())
-                .orElseThrow(() -> new AppException("Benutzer nicht gefunden."));
-
-        if (!user.isEnabled()) {
-            throw new AppException("Bitte bestätige zuerst deine E-Mail-Adresse!");
+        // Unbekannte oder unbestätigte E-Mail: stillschweigend nichts tun (kein Hinweis, ob das Konto existiert)
+        Optional<AppUser> maybeUser = appUserRepository.findByEmail(request.email())
+                .filter(AppUser::isEnabled);
+        if (maybeUser.isEmpty()) {
+            return;
         }
+        AppUser user = maybeUser.get();
 
         // Es darf immer nur EIN gültiger Code existieren
         passwordResetTokenRepository.invalidateAllActiveTokens(user.getId());
@@ -81,8 +81,6 @@ public class PasswordResetService {
     private PasswordResetToken validateCode(String email, String code) {
         PasswordResetToken resetToken = passwordResetTokenRepository.findValidTokenByEmail(email)
                 .orElseThrow(() -> new AppException("Kein gültiger Reset-Code gefunden."));
-
-        // ΕΔΩ ΕΓΙΝΕ Η ΑΛΛΑΓΗ ΣΕ LocalDateTime.now(clock)
         if (resetToken.getExpiresAt().isBefore(LocalDateTime.now(clock))) {
             throw new AppException("Der Code ist abgelaufen. Bitte fordere einen neuen an.");
         }
@@ -107,4 +105,6 @@ public class PasswordResetService {
         passwordResetTokenRepository.save(token);
         return new AppException("Falscher Bestätigungscode! Noch " + (MAX_FAILED_ATTEMPTS - attempts) + " Versuche.");
     }
+
+
 }
