@@ -1,0 +1,10 @@
+  include:
+    - docker-compose.yml
+
+  services:
+    frontend:
+      build: ../medical-app-frontend
+      depends_on:
+        - backend
+      ports:
+        - "4200:80"
