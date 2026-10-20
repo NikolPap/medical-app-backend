@@ -1,5 +1,6 @@
 package com.portofolio.medical_app.config;
 
+import jakarta.servlet.http.HttpServletResponse; // ΠΡΟΣΤΕΘΗΚΕ ΤΟ IMPORT
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -59,6 +60,12 @@ public class SecurityConfig {
                             .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                             .anyRequest().authenticated()
                     )
+                    // Exception Handling για 401 Unauthorized (ΠΡΟΣΤΕΘΗΚΕ)
+                    .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.getWriter().write("{\"message\":\"Bitte melde dich an.\"}");
+                    }))
                     // Unseren JWT Filter an die Tür stellen!
                     .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
