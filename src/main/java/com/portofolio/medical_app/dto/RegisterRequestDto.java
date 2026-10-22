@@ -37,9 +37,7 @@ public record RegisterRequestDto(
         @Pattern(regexp = "^\\+?[0-9\\s\\-/]{6,20}$", message = "Bitte gib eine gültige Telefonnummer ein.")
         String phoneNumber,
 
-        @Pattern(regexp = "MALE|FEMALE|DIVERS", message = "Ungültiges Geschlecht.")
         String gender,
 
-        @Pattern(regexp = "GESETZLICH|PRIVATE", message = "Ungültige Versicherungsart.")
         String insuranceType
 ) {}
