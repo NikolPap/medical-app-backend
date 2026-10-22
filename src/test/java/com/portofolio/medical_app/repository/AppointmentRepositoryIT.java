@@ -12,7 +12,6 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -29,8 +28,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestPropertySource(properties = {
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-
+        "spring.jpa.hibernate.ddl-auto=validate",
+        "spring.flyway.enabled=true",
+        "spring.flyway.baseline-on-migrate=false"
 })
 class AppointmentRepositoryIT {
 
@@ -42,7 +42,6 @@ class AppointmentRepositoryIT {
 
     @Autowired private AppointmentRepository appointmentRepository;
     @Autowired private AppUserRepository appUserRepository;
-    @Autowired private JdbcTemplate jdbcTemplate;
 
     private AppUser doctor;
     private AppUser otherDoctor;
@@ -50,11 +49,7 @@ class AppointmentRepositoryIT {
     private AppUser otherPatient;
 
     @BeforeEach
-    @SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
     void setUp() {
-        // Derselbe partielle Index, den wir in Produktion per SQL anlegen
-        jdbcTemplate.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_appointments_doctor_slot "
-                + "ON appointments (doctor_id, appointment_date) WHERE status <> 'CANCELLED'");
 
         doctor = appUserRepository.save(user("doc@example.com", Roles.DOCTOR));
         otherDoctor = appUserRepository.save(user("doc2@example.com", Roles.DOCTOR));
