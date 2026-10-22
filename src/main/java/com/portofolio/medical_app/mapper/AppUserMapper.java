@@ -1,5 +1,6 @@
 package com.portofolio.medical_app.mapper;
 
+import com.portofolio.medical_app.config.Roles;
 import com.portofolio.medical_app.dto.RegisterRequestDto;
 import com.portofolio.medical_app.entity.AppUser;
 import org.springframework.stereotype.Component;
@@ -16,13 +17,23 @@ public class AppUserMapper {
 
         user.setFirstName(dto.firstName());
         user.setLastName(dto.lastName());
-        user.setSpecialty(dto.specialty());
-        user.setAddress(dto.address());
         user.setPhoneNumber(dto.phoneNumber());
-        user.setGender(dto.gender());
-        user.setInsuranceType(dto.insuranceType());
+
+        // Prüfen, ob der Nutzer ein Arzt ist
+        boolean isDoctor = Roles.DOCTOR.equals(dto.role());
+
+        // Ärzte haben Fachrichtung/Adresse, Patienten nicht
+        user.setSpecialty(isDoctor ? blankToNull(dto.specialty()) : null);
+        user.setAddress(isDoctor ? blankToNull(dto.address()) : null);
+
+        // Patienten haben Geschlecht/Versicherung, Ärzte nicht
+        user.setGender(isDoctor ? null : blankToNull(dto.gender()));
+        user.setInsuranceType(isDoctor ? null : blankToNull(dto.insuranceType()));
 
         return user;
     }
 
+    private String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value;
+    }
 }
