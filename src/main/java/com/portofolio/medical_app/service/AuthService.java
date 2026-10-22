@@ -29,6 +29,8 @@ public class AuthService {
     private final VerificationTokenMapper verificationTokenMapper;
 
     private static final Set<String> ALLOWED_ROLES = Set.of("ROLE_PATIENT", "ROLE_DOCTOR");
+    private static final Set<String> GENDERS = Set.of("MALE", "FEMALE", "DIVERS");
+    private static final Set<String> INSURANCE_TYPES = Set.of("GESETZLICH", "PRIVATE");
 
     //Die Methode zur Registrierung
     @Transactional
@@ -70,13 +72,21 @@ public class AuthService {
             if (isBlank(request.specialty()) || isBlank(request.address())) {
                 throw new AppException("Fachrichtung und Praxis-Adresse sind für Ärzte Pflicht.");
             }
-        } else if (isBlank(request.gender()) || isBlank(request.insuranceType())) {
+            return; // Geschlecht und Versicherung werden bei Ärzten ignoriert
+        }
+
+        if (isBlank(request.gender()) || isBlank(request.insuranceType())) {
             throw new AppException("Geschlecht und Versicherungsart sind für Patienten Pflicht.");
+        }
+        if (!GENDERS.contains(request.gender())) {
+            throw new AppException("Ungültiges Geschlecht.");
+        }
+        if (!INSURANCE_TYPES.contains(request.insuranceType())) {
+            throw new AppException("Ungültige Versicherungsart.");
         }
     }
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
-
 }
