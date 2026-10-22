@@ -1,14 +1,14 @@
 package com.portofolio.medical_app.config;
 
-import jakarta.servlet.http.HttpServletResponse; // ΠΡΟΣΤΕΘΗΚΕ ΤΟ IMPORT
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value; // ΠΡΟΣΤΕΘΗΚΕ ΤΟ IMPORT
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +27,8 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
+    @Value("${cors.allowed-origin}")
+    private String allowedOrigin;
 
     // 1. Der Passwort-Verschlüsseler (BCrypt ist der Industrie-Standard)
     @Bean
@@ -46,9 +48,6 @@ public class SecurityConfig {
                     // SonarQube Fix 2: Method Reference statt Lambda
                     .csrf(AbstractHttpConfigurer::disable)
 
-                    // X-Frame-Options deaktivieren (z.B. für H2 Konsolen oder iFrames)
-                    .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
-
                     // Stateless Session Management (Wichtig für JWT)
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
@@ -57,10 +56,12 @@ public class SecurityConfig {
                             // Diese URLs dürfen von JEDEM aufgerufen werden (z.B. Registrierung / Login / Freie Slots)
                             .requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers("/api/appointments/available-slots").permitAll()
+                            .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+
                             .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                             .anyRequest().authenticated()
                     )
-                    // Exception Handling για 401 Unauthorized (ΠΡΟΣΤΕΘΗΚΕ)
+                    // Exception Handling για 401 Unauthorized
                     .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                         response.setContentType("application/json;charset=UTF-8");
@@ -81,17 +82,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // Wer darf mit uns sprechen? (Die Angular App!)
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedOrigins(List.of(allowedOrigin));
 
         // Welche Methoden sind erlaubt?
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
-        // Welche Header dürfen mitgeschickt werden? (WICHTIG FÜR JWT!)
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 
-        // Dürfen Cookies/Credentials gesendet werden?
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
