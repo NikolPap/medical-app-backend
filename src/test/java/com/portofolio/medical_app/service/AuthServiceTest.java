@@ -152,6 +152,31 @@ class AuthServiceTest {
                 .hasMessageContaining("Pflicht");
     }
 
+    // ΠΡΟΣΤΕΘΗΚΑΝ ΤΑ ΝΕΑ TEST ΕΔΩ:
+    @Test
+    void doctorWithEmptyGenderAndInsuranceIsAccepted() {
+        RegisterRequestDto request = new RegisterRequestDto("doc@example.com", "Secret1", Roles.DOCTOR,
+                "Max", "Muster", "Kardiologie", "Praxisstr. 1", "+49 611 123456", "", "");
+
+        service.register(request);
+
+        ArgumentCaptor<AppUser> saved = ArgumentCaptor.forClass(AppUser.class);
+        verify(appUserRepository).save(saved.capture());
+
+        assertThat(saved.getValue().getGender()).isNull();
+        assertThat(saved.getValue().getInsuranceType()).isNull();
+    }
+
+    @Test
+    void patientWithUnknownGenderIsRejected() {
+        RegisterRequestDto request = new RegisterRequestDto("anna@example.com", "Secret1", Roles.PATIENT,
+                "Anna", "Schmidt", null, null, "+49 611 123456", "FOO", "GESETZLICH");
+
+        assertThatThrownBy(() -> service.register(request))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("Ungültiges Geschlecht");
+    }
+
     // ---------- Helfer ----------
 
     private RegisterRequestDto patient() {
