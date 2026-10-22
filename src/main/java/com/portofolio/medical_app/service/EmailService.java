@@ -1,16 +1,15 @@
 package com.portofolio.medical_app.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class EmailService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
@@ -18,6 +17,10 @@ public class EmailService {
     private static final String SENDER_EMAIL = "noreply@medical-app.com";
 
     private final JavaMailSender mailSender;
+
+    // Προστέθηκε ο "διακόπτης". Αν είμαστε σε παραγωγή (prod), αυτό θα είναι false.
+    @Value("${app.mail.log-codes:false}")
+    private boolean logCodes;
 
     public void sendVerificationEmail(String toEmail, String token) {
         try {
@@ -29,13 +32,19 @@ public class EmailService {
 
             mailSender.send(message);
 
-            LOGGER.info("E-Mail adresse: {}", toEmail);
+            LOGGER.info("Verifizierungs-Mail gesendet.");
 
-            LOGGER.info("🔐 Der Code lautet: {}", token);
+            // Τυπώνει τον κωδικό μόνο αν επιτρέπεται (dev)
+            if (logCodes) {
+                LOGGER.info("DEV: Code für {} lautet {}", toEmail, token);
+            }
 
         } catch (Exception e) {
-            LOGGER.error("Fehler beim Senden der E-Mail: {}", e.getMessage());
-            LOGGER.warn("⚠️ FALLBACK: Der Code für {} ist: {}", toEmail, token);
+            LOGGER.error("Fehler beim Senden der Verifizierungs-Mail: {}", e.getMessage());
+
+            if (logCodes) {
+                LOGGER.warn("DEV-FALLBACK: Code für {} ist {}", toEmail, token);
+            }
         }
     }
 
@@ -48,10 +57,20 @@ public class EmailService {
             message.setText("Du hast eine Anfrage zum Zurücksetzen deines Passworts gestellt.\n" +
                     "Dein Code lautet: " + token + "\n" +
                     "Dieser Code ist 15 Minuten gültig.");
+
             mailSender.send(message);
-            LOGGER.info("📧 Passwort-Reset-E-Mail erfolgreich gesendet an: {}", toEmail);
+
+            LOGGER.info("Passwort-Reset-E-Mail gesendet.");
+
+            if (logCodes) {
+                LOGGER.info("DEV: Passwort-Reset-Code für {} lautet {}", toEmail, token);
+            }
         } catch (Exception e) {
-            LOGGER.warn("⚠️ FALLBACK: Der Passwort-Reset-Code für {} ist: {}", toEmail, token);
+            LOGGER.error("Fehler beim Senden der Passwort-Reset-E-Mail: {}", e.getMessage());
+
+            if (logCodes) {
+                LOGGER.warn("DEV-FALLBACK: Der Passwort-Reset-Code für {} ist: {}", toEmail, token);
+            }
         }
     }
 
@@ -64,10 +83,18 @@ public class EmailService {
             message.setText(messageBody);
 
             mailSender.send(message);
-            LOGGER.info("📧 Status-Update gesendet an: {}", toEmail);
+
+            LOGGER.info("Status-Update gesendet.");
+
+            if (logCodes) {
+                LOGGER.info("DEV: Status-Update an {} gesendet: {}", toEmail, messageBody);
+            }
         } catch (Exception e) {
-            LOGGER.warn("⚠️ FALLBACK EMAIL an {}: {}", toEmail, messageBody);
+            LOGGER.error("Fehler beim Senden der Status-Update-E-Mail: {}", e.getMessage());
+
+            if (logCodes) {
+                LOGGER.warn("DEV-FALLBACK EMAIL an {}: {}", toEmail, messageBody);
+            }
         }
     }
-
 }
